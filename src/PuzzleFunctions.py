@@ -1,4 +1,4 @@
-
+#8, 16, 24, 35
 
 def getDisplacementPairs(board):
     
@@ -30,3 +30,32 @@ def printBoardNicely(board):
             print((str)(board[i][k])+" ", end="")
 
         print("")
+
+
+def findTileWithValue(board, tileNum):
+    
+    for i in range(0, len(board)):
+        for k in range(0, len(board[i])):
+            if(board[i][k] == tileNum):
+                return i, k
+            
+    return None
+
+def getPossibleActions(board, emptyTile=0):
+    
+    emptyI, emptyK = findTileWithValue(board, emptyTile)
+     
+    possibleSteps = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+    
+    possibleMoves = []
+    
+    for move in possibleSteps:
+        tempMove = {}
+        to_i = emptyI+move[0]
+        to_k = emptyK+move[1]
+        if(to_i >=0 and to_k >= 0 and to_i < len(board) and to_k < len(board[0])):
+            tempMove["from"] = [emptyI, emptyK]
+            tempMove["to"] = [to_i, to_k]
+            possibleMoves.append(tempMove)
+    
+    return possibleMoves
