@@ -1,5 +1,6 @@
 from copy import deepcopy
 import random
+import math
 
 #8, 16, 24, 35
 def getDisplacementPairs(board):
@@ -29,9 +30,17 @@ def boardToStr(board):
 def boardFromStr(boardStr, splitter="."):
 
     boardArray = boardStr.split(splitter)
-
-        for x in boardArray:
-
+    realLen = int(math.sqrt(len(boardArray)))
+    newBoard = createEmptyBoard(boardSize=realLen)
+    print(boardArray)
+    
+    count = 0
+    for i in range (0, realLen):
+        for k in range(0, realLen):
+            newBoard[i][k] = (int)(boardArray[count])
+            count = count+1
+            
+    return newBoard
 
 
 def createEmptyBoard(boardSize=3):
