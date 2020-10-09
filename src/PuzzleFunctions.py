@@ -1,5 +1,7 @@
-#8, 16, 24, 35
+from copy import deepcopy
+import random
 
+#8, 16, 24, 35
 def getDisplacementPairs(board):
     
     displacementPairs = []
@@ -23,6 +25,19 @@ def boardToStr(board):
         totalStr = totalStr+tempStr
         
     return totalStr[:-1]
+
+def boardFromStr(boardStr, splitter="."):
+
+    boardArray = boardStr.split(splitter)
+
+        for x in boardArray:
+
+
+
+def createEmptyBoard(boardSize=3):
+    theBoard = [[None for i in range(boardSize)] for j in range(boardSize)]
+
+    return theBoard
 
 def printBoardNicely(board):
     for i in range(0, len(board)):
@@ -59,3 +74,49 @@ def getPossibleActions(board, emptyTile=0):
             possibleMoves.append(tempMove)
     
     return possibleMoves
+
+
+def getPossibleStates(board, possibleMoves):
+    
+    possibleStates = []
+    
+    for move in possibleMoves:
+        new_board = makeMove(board, move)
+        
+        possibleStates.append((new_board))
+        
+    return possibleStates
+
+
+def makeMove(board, move):
+    
+    newBoard = deepcopy(board)
+    
+    fromCoords = move["from"]
+    toCoords = move["to"]
+    
+    newBoard[fromCoords[0]][fromCoords[1]] = board[toCoords[0]][toCoords[1]]
+    newBoard[toCoords[0]][toCoords[1]] = board[fromCoords[0]][fromCoords[1]]
+    
+    return newBoard
+
+def createRandomBoard(possibleVals, boardSize=3):
+    
+    tempStack = deepcopy(possibleVals)
+    board = createEmptyBoard(boardSize=boardSize)
+    
+    count = 0
+    for i in range(0, len(board)):
+        for k in range(0, len(board[i])):
+            randomNum = random.randint(0, len(tempStack)-1)
+            board[i][k] = tempStack[randomNum]
+            tempStack.remove(tempStack[randomNum])
+            
+            count = count+1
+            
+    return board
+
+
+def isBoardSolvable(board):
+
+    return len(getDisplacementPairs(board))%2
