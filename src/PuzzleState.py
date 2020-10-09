@@ -28,3 +28,5 @@ class Node:
             if(theBoard != self.lastNode.board):
                 self.connectedNodes.append(Node(theBoard, self, self.pathCost+1, self.heuristic+1))
 
+    def isSolvable(self):
+        return PuzzleFunctions.isBoardSolvable(self.board)
