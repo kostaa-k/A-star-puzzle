@@ -2,7 +2,7 @@ from copy import deepcopy
 import random
 import math
 
-#8, 16, 24, 35
+#8, 16, 24, 35 boards
 def getDisplacementPairs(board):
     
     displacementPairs = []

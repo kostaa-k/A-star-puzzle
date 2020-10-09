@@ -6,16 +6,14 @@ import PuzzleFunctions
 
 class Node:
     board = None
-    numDisplacementPairs = None
     lastNode = None
     pathCost = None
     heuristic = None
     possibleMoves = None
     connectedNodes = []
 
-    def __init__(self, board, numDisplacementPairs, lastNode, pathCost, heuristic):
+    def __init__(self, board, lastNode, pathCost, heuristic):
         self.board = board
-        self.numDisplacementPairs = numDisplacementPairs
         self.lastNode = lastNode
         self.pathCost = pathCost
         self.heuristic = heuristic
@@ -28,5 +26,5 @@ class Node:
         for aMove in self.possibleMoves:
             theBoard = PuzzleFunctions.makeMove(self.board, aMove)
             if(theBoard != self.lastNode.board):
-                self.connectedNodes.append(Node(theBoard, PuzzleFunctions.getDisplacementPairs(theBoard), self, self.pathCost+1, self.heuristic+1))
+                self.connectedNodes.append(Node(theBoard, self, self.pathCost+1, self.heuristic+1))
 
