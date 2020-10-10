@@ -3,18 +3,25 @@ import random
 import math
 
 #8, 16, 24, 35 boards
-def getDisplacementPairs(board):
-    
+def getDisplacementPairs(board, empty_tile =0):
+
     displacementPairs = []
     
-    for i in range(0, len(board)):
-        for k in range(0, len(board[i])):
-            currentValue = board[i][k]
-            if(currentValue != 0):
-                for j in range(i, len(board)):
-                    for p in range(k, len(board[j])):
-                        if(currentValue > board[j][p]):
-                            displacementPairs.append([currentValue, board[j][p]])
+    boardStr = boardToStr(board)
+
+    boardList = boardStr.split(".")
+
+    linearBoard = []
+
+    for x in boardList:
+        if((int)(x) != empty_tile):
+            linearBoard.append((int)(x))
+
+
+    for i in range(0, len(linearBoard)-1):
+        for k in range(i+1, len(linearBoard)):
+            if(linearBoard[k] < linearBoard[i]):
+                displacementPairs.append([linearBoard[i], linearBoard[k]])
                             
     return displacementPairs
 
@@ -127,5 +134,5 @@ def createRandomBoard(possibleVals, boardSize=3):
 
 
 def isBoardSolvable(board):
-
-    return len(getDisplacementPairs(board))%2
+    
+    return (len(getDisplacementPairs(board)))%2==0
