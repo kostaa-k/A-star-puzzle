@@ -133,6 +133,17 @@ def createRandomBoard(possibleVals, boardSize=3):
     return board
 
 
+def getMaxValue(board):
+
+    maxValue = -1
+
+    for i in range(0, len(board)):
+        for k in range(0, len(board[i])):
+            if(board[i][k] > maxValue):
+                maxValue = board[i][k]
+
+    return maxValue
+
 def isBoardSolvable(board):
     
     return (len(getDisplacementPairs(board)))%2==0
