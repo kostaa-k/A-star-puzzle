@@ -20,7 +20,16 @@ class Node:
         self.connectedNodes = []
 
     def __lt__(self, other):
-        return (self.heuristic+self.pathCost) < (other.heuristic+self.pathCost)
+        return (self.heuristic+self.pathCost) < (other.heuristic+other.pathCost)
+        
+    def __gt__(self, other):
+        return (self.heuristic+self.pathCost) > (other.heuristic+other.pathCost)
+
+    def __str__(self):
+        return (str)(self.heuristic+self.pathCost)
+
+    def __eq__(self, other):
+        return self.board == other.board and self.pathCost == other.pathCost and self.lastNode == other.lastNode
 
     def getConnectedNodes(self):
         for aMove in self.possibleMoves:

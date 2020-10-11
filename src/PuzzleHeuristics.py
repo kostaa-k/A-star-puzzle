@@ -1,5 +1,16 @@
 import PuzzleFunctions
 
+
+def getHeuristicsDictionary():
+    heuristicDictionary = {}
+    heuristicDictionary["h1"] = getBoardManhattanScore
+    heuristicDictionary["h2"] = getNumMispacedTiles
+    heuristicDictionary["h3"] = getNumberOfIncompleteRowsAndCols
+    heuristicDictionary["h4"] = getNumIncorrectRelatives
+    heuristicDictionary["h5"] = getNumIncorrectRelatives_add_max_false
+
+    return heuristicDictionary
+
 def getBoardManhattanScore(board, successBoard):
     #Defined as h1
     manhattanSum = 0
@@ -82,6 +93,10 @@ def getNumIncorrectRelatives(board, successBoard, add_to_max=True):
                 if(paddedBoard[i+move[0]][k+move[1]] != paddedSuccessBoard[otherTileI+move[0]][otherTileK+move[1]]):
                     countMisplaced = countMisplaced+1
 
-    misplacedAvg = (float)(countMisplaced)/4.0
+    misplacedAvg = (float)(countMisplaced)/9.0
 
     return misplacedAvg
+
+
+def getNumIncorrectRelatives_add_max_false(board, successBoard):
+    return getNumIncorrectRelatives(board, successBoard, add_to_max=False)

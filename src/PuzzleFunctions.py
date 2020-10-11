@@ -116,7 +116,9 @@ def makeMove(board, move):
     
     return newBoard
 
-def createRandomBoard(possibleVals, boardSize=3):
+def createRandomBoard(possibleVals):
+
+    boardSize = (int)(math.sqrt(len(possibleVals)))
     
     tempStack = deepcopy(possibleVals)
     board = createEmptyBoard(boardSize=boardSize)
@@ -147,3 +149,23 @@ def getMaxValue(board):
 def isBoardSolvable(board):
     
     return (len(getDisplacementPairs(board)))%2==0
+
+
+def createSuccessState(boardSize):
+    theBoard = createEmptyBoard(boardSize=boardSize)
+
+    count = 0
+
+    for i in range(0, boardSize):
+        for k in range(0, boardSize):
+            theBoard[i][k] = count
+            count = count+1
+
+    return theBoard
+
+def getPossibleValues(kernelSize):
+    returnList = []
+    for i in range(0, (kernelSize*kernelSize)):
+        returnList.append(i)
+
+    return returnList
