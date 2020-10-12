@@ -3,25 +3,15 @@ import PuzzleFunctions
 
 def getHeuristicsDictionary():
     heuristicDictionary = {}
-    heuristicDictionary["h1"] = getBoardManhattanScore
-    heuristicDictionary["h2"] = getNumMispacedTiles
-    heuristicDictionary["h3"] = getNumberOfIncompleteRowsAndCols
-    heuristicDictionary["h4"] = getNumIncorrectRelatives
-    heuristicDictionary["h5"] = getNumIncorrectRelatives_add_max_false
+    heuristicDictionary["h1"] = getNumMispacedTiles
+    heuristicDictionary["h2"] = getBoardManhattanScore
+    heuristicDictionary["h3"] = maxIDMD
+    heuristicDictionary["h4"] = getNumberOfIncompleteRowsAndCols
+    heuristicDictionary["h5"] = getNumIncorrectRelatives
+    heuristicDictionary["h6"] = getNumIncorrectRelatives_add_max_false
 
     return heuristicDictionary
 
-def getBoardManhattanScore(board, successBoard):
-    #Defined as h1
-    manhattanSum = 0
-
-    for i in range(0, len(board)):
-        for k in range(0, len(board[i])):
-            otherTileI, otherTileK = PuzzleFunctions.findTileWithValue(successBoard, board[i][k])
-            manhattanDiff = abs(otherTileI-i)+abs(otherTileK-k)
-            manhattanSum = manhattanSum+manhattanDiff
-
-    return manhattanSum
 
 def getNumMispacedTiles(board, successBoard):
     #Defined as h2
@@ -29,12 +19,57 @@ def getNumMispacedTiles(board, successBoard):
 
     for i in range(0, len(board)):
         for k in range(0, len(board[i])):
-            otherTileI, otherTileK = PuzzleFunctions.findTileWithValue(successBoard, board[i][k])
-            if(i != otherTileI or k != otherTileK):
-                displacedCount = displacedCount+1
+            if(board[i][k] != 0):
+                otherTileI, otherTileK = PuzzleFunctions.findTileWithValue(successBoard, board[i][k])
+                if(i != otherTileI or k != otherTileK):
+                    displacedCount = displacedCount+1
 
     return displacedCount
 
+
+def getBoardManhattanScore(board, successBoard):
+    #Defined as h2
+    manhattanSum = 0
+
+    for i in range(0, len(board)):
+        for k in range(0, len(board[i])):
+            if(board[i][k] != 0):
+                otherTileI, otherTileK = PuzzleFunctions.findTileWithValue(successBoard, board[i][k])
+                manhattanDiff = abs(otherTileI-i)+abs(otherTileK-k)
+                manhattanSum = manhattanSum+manhattanDiff
+
+    return manhattanSum
+
+
+#THIS CAN BE OUR H3 -> from https://web.archive.org/web/20141224035932/http://juropollo.xe0.ru:80/stp_wd_translation_en.htm
+def maxIDMD(board, successBoard):
+    
+    return max(getBoardManhattanScore(board, successBoard), getInversionDistance(board, successBoard))
+
+def getInversionDistance(board, successBoard):
+
+    boardRows = PuzzleFunctions.boardTo1DList(board)
+    boardCols = PuzzleFunctions.boardTo1DList(PuzzleFunctions.transposeBoard(board))
+
+    verticalInversions = getInversionsInList(boardRows)
+    verticalInversions = verticalInversions//3 + (verticalInversions%3)
+    horizontalInversions = getInversionsInList(boardCols)
+    horizontalInversions = horizontalInversions//3 + (horizontalInversions%3)
+
+    return verticalInversions+horizontalInversions
+
+
+def getInversionsInList(aList):
+
+    inversionCount = 0
+
+    for i in range (0, len(aList)):
+        if(aList[i] != 0):
+            for j in range(i+1, len(aList)):
+                if (aList[j] < aList[i] and aList[j] != 0):
+                    inversionCount = inversionCount+1
+
+    return inversionCount
 
 #YOUR IMPLEMENTATIONS BELOW: :)
 

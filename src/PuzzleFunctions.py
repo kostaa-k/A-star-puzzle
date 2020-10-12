@@ -49,6 +49,29 @@ def boardFromStr(boardStr, splitter="."):
             
     return newBoard
 
+def boardTo1DList(board):
+
+    boardStr = boardToStr(board)
+
+    boardSplit = boardStr.split(".")
+    
+    outputBoard = []
+
+    for x in boardSplit:
+        outputBoard.append(x)
+
+    return outputBoard
+
+def transposeBoard(board):
+    
+    newBoard = deepcopy(board)
+
+    for i in range(0, len(board)):
+        for k in range(0, len(board[i])):
+            newBoard[k][i] = board[i][k]
+
+    return newBoard
+
 
 def createEmptyBoard(boardSize=3):
     theBoard = [[None for i in range(boardSize)] for j in range(boardSize)]

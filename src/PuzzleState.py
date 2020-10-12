@@ -40,6 +40,8 @@ class Node:
             else:
                 self.connectedNodes.append(Node(theBoard, self, self.pathCost+1))
 
+        return self.connectedNodes
+
     def isSolvable(self):
         return PuzzleFunctions.isBoardSolvable(self.board)
 
@@ -48,3 +50,6 @@ class Node:
 
     def getTotalScore(self):
         return self.pathCost+self.heuristic
+
+    def toHash(self):
+        return PuzzleFunctions.boardToStr(self.board)+","+(str)(self.pathCost)
