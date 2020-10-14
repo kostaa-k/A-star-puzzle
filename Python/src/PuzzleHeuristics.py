@@ -13,28 +13,32 @@ def getHeuristicsDictionary():
     return heuristicDictionary
 
 
-def getNumMispacedTiles(board, successBoard):
+def getNumMispacedTiles(board, successDictionary):
     #Defined as h2
     displacedCount = 0
 
     for i in range(0, len(board)):
         for k in range(0, len(board[i])):
             if(board[i][k] != 0):
-                otherTileI, otherTileK = PuzzleFunctions.findTileWithValue(successBoard, board[i][k])
+                zeroTileList = successDictionary[board[i][k]]
+                otherTileI = zeroTileList[0]
+                otherTileK = zeroTileList[1]
                 if(i != otherTileI or k != otherTileK):
                     displacedCount = displacedCount+1
 
     return displacedCount
 
 
-def getBoardManhattanScore(board, successBoard):
+def getBoardManhattanScore(board, successDictionary):
     #Defined as h2
     manhattanSum = 0
 
     for i in range(0, len(board)):
         for k in range(0, len(board[i])):
             if(board[i][k] != 0):
-                otherTileI, otherTileK = PuzzleFunctions.findTileWithValue(successBoard, board[i][k])
+                zeroTileList = successDictionary[board[i][k]]
+                otherTileI = zeroTileList[0]
+                otherTileK = zeroTileList[1]
                 manhattanDiff = abs(otherTileI-i)+abs(otherTileK-k)
                 manhattanSum = manhattanSum+manhattanDiff
 
@@ -42,11 +46,11 @@ def getBoardManhattanScore(board, successBoard):
 
 
 #THIS CAN BE OUR H3 -> from https://web.archive.org/web/20141224035932/http://juropollo.xe0.ru:80/stp_wd_translation_en.htm
-def maxIDMD(board, successBoard):
+def maxIDMD(board, successDictionary):
     
-    return max(getBoardManhattanScore(board, successBoard), getInversionDistance(board, successBoard))
+    return max(getBoardManhattanScore(board, successDictionary), getInversionDistance(board))
 
-def getInversionDistance(board, successBoard):
+def getInversionDistance(board):
 
     boardRows = PuzzleFunctions.boardTo1DList(board)
     boardCols = PuzzleFunctions.boardTo1DList(PuzzleFunctions.transposeBoard(board))

@@ -24,6 +24,8 @@ def main():
 
     vals = ["h1", "h2", "h3"]
 
+
+    successDict = PuzzleFunctions.getSuccessDictionary(successState)
     count = 0
     while(count < 15):
         randomState = PuzzleFunctions.createRandomBoard(possibleVals)
@@ -32,11 +34,13 @@ def main():
         if(aNode.isSolvable()):
             for key in vals:
                 nodesExpanded = 0
-                finishedNode, nodesExpanded = DriverFunctions.solvePuzzle(aNode, successState, key, heuristicsDict)
+                finishedNode, nodesExpanded = DriverFunctions.IDA(aNode, successState,successDict, hVal=key)
                 pathCost_df.at[key, "PathCost"+(str)(count)] = finishedNode.pathCost
                 nodesExpanded_df.at[key, "NodesExpanded"+str(count)] = nodesExpanded
                 print(key, " FINISHED WITH PATH COST: ", finishedNode.pathCost, "NODES EXPANDED: ", nodesExpanded)
             count = count+1
+        else:
+            print("Not solvable")
 
     print(pathCost_df)
 

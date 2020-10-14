@@ -2,6 +2,17 @@ from copy import deepcopy
 import random
 import math
 
+
+def getSuccessDictionary(successBoard):
+
+    returnDict = {}
+
+    for i in range(0, len(successBoard)):
+        for k in range(0, len(successBoard[i])):
+            returnDict[successBoard[i][k]] = [i, k]
+
+    return returnDict
+
 #8, 16, 24, 35 boards
 def getDisplacementPairs(board, empty_tile =0):
 
@@ -95,49 +106,28 @@ def findTileWithValue(board, tileNum):
             
     return None
 
-def getPossibleActions(board, emptyTile=0):
+def getPossibleStates(board, boardHash, emptyTile=0):
     
-    emptyI, emptyK = findTileWithValue(board, emptyTile)
+    zeroList = boardHash[emptyTile]
+    emptyI = zeroList[0]
+    emptyK = zeroList[1]
      
     possibleSteps = [[1, 0], [-1, 0], [0, 1], [0, -1]]
     
-    possibleMoves = []
+    possibleStates = []
     
     for move in possibleSteps:
-        tempMove = {}
         to_i = emptyI+move[0]
         to_k = emptyK+move[1]
         if(to_i >=0 and to_k >= 0 and to_i < len(board) and to_k < len(board[0])):
-            tempMove["from"] = [emptyI, emptyK]
-            tempMove["to"] = [to_i, to_k]
-            possibleMoves.append(tempMove)
+            board[emptyI][emptyK] = board[to_i][to_k]
+            board[to_i][to_k] = emptyTile
+            possibleStates.append(deepcopy(board))
+            board[to_i][to_k] = board[emptyI][emptyK]
+            board[emptyI][emptyK] = emptyTile
     
-    return possibleMoves
-
-
-def getPossibleStates(board, possibleMoves):
-    
-    possibleStates = []
-    
-    for move in possibleMoves:
-        new_board = makeMove(board, move)
-        
-        possibleStates.append((new_board))
-        
     return possibleStates
 
-
-def makeMove(board, move):
-    
-    newBoard = deepcopy(board)
-    
-    fromCoords = move["from"]
-    toCoords = move["to"]
-    
-    newBoard[fromCoords[0]][fromCoords[1]] = board[toCoords[0]][toCoords[1]]
-    newBoard[toCoords[0]][toCoords[1]] = board[fromCoords[0]][fromCoords[1]]
-    
-    return newBoard
 
 def createRandomBoard(possibleVals):
 

@@ -40,51 +40,7 @@ def solvePuzzle(aNode, successState, hVal, heuristicDictionary=None):
 
         count = count+1
 
-
-
-
     return aNode, nodesExpanded
-
-
-
-def depthFirstSearch(aNode, successState, hVal, heuristicDictionary=None):
-    if(heuristicDictionary== None):
-        heuristicDictionary = PuzzleHeuristics.getHeuristicsDictionary()
-
-    rootNode = deepcopy(aNode)
-    frontierNodes = []
-
-    nodesExpanded = 0
-
-    depthCount = 0
-    isSolved = False
-    while(isSolved == False):
-
-        aNode.getConnectedNodes()
-
-        if(aNode.board == successState):
-            isSolved = True
-
-        nodesExpanded = nodesExpanded+1
-
-        for tempNode in aNode.connectedNodes:
-            tempNode.heuristic = heuristicDictionary[hVal](tempNode.board, successState)
-
-            #print(tempNode.getTotalScore())
-            #time.sleep(3)
-
-            if(tempNode.getTotalScore() <= depthCount):
-                bisect.insort(frontierNodes, tempNode)
-
-        if(len(frontierNodes) == 0):
-            depthCount = depthCount+1
-            print(depthCount)
-            aNode = rootNode
-            frontierNodes = []
-        else:
-            aNode = frontierNodes.pop()
-            if(aNode.board == successState):
-                isSolved = True
 
 
     print("Finished")
@@ -92,42 +48,60 @@ def depthFirstSearch(aNode, successState, hVal, heuristicDictionary=None):
 
 visitedNodes = {}
 newLimit = 1000
-def IDA(node, successState, hVal, heuristicDictionary):
+def IDA(node, successState, successDictionary, hVal="h1"):
     limit = 4
     result = False
     while(result is not True):
         visitedNodes[node.toHash()] = 1
-        result = DFS(node, limit, successState, hVal, heuristicDictionary)
+        result = DFS(node, limit, successState, hVal, successDictionary)
 
+        if(result is not None):
+            return result, result.pathCost
         limit = limit+1
-        print(limit)
+        #print(limit)
         visitedNodes.clear()
 
-def DFS(node, limit, successState, hVal, heuristicDictionary):
+    return
+
+def DFS(node, limit, successState, hVal, successDictionary):
 
 
     if(node.board == successState):
-        return True
+        return node
     
 
     minValue = 10000
-    node.getConnectedNodes()
-    for tempNode in node.connectedNodes:
-        tempNode.heuristic = heuristicDictionary[hVal](tempNode.board, successState)
+    for tempNode in node.getConnectedNodes():
+        tempNode.calculateHeuristic(hVal, successDictionary)
         if(tempNode.toHash() not in visitedNodes):
 
             if(tempNode.getTotalScore() <= limit):
                 visitedNodes[tempNode.toHash()] = 1
-                ans = DFS(tempNode, limit, successState, hVal, heuristicDictionary)
+                ans = DFS(tempNode, limit, successState, hVal, successDictionary)
 
-                if(ans == True):
-                    return True
+                if(ans is not None):
+                    return ans
 
             elif (tempNode.getTotalScore() < minValue):
                 minValue = tempNode.getTotalScore()
                 newLimit = minValue
 
-    return minValue
+    return None
+
+
+# def IDA2(startNode, successState, hVal, heuristicDictionary):
+
+#     threshold = heuristicDictionary[hVal](startNode.board, successState)
+#     answer = False
+#     while(answer == False):
+#         temp = search(startNode, 0, threshold)
+#         if(temp is True):
+#             return True
+
+#         threshold = temp
+
+
+# def search(node, g, threshold):
 
 
 
