@@ -1,11 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <malloc.h>
-#include "hashset.h"
+#include <bits/stdc++.h> 
+#include<iostream> 
+#include <sstream>  // for string streams 
+#include <string>
 
-#define BOARDSIZE 3
-#define MAXHASHSIZE 
+
+#define BOARDSIZE 4
+
+using namespace std;
 
 typedef struct Board {
     int board[BOARDSIZE][BOARDSIZE];
@@ -14,11 +18,9 @@ typedef struct Board {
 } board;
 
 
-
 typedef struct Node {
     int pathCost;
     board currentBoard;
-    char boardHash[20];
     char previousMove;
 } node;
 
@@ -39,12 +41,13 @@ node getNeighborL(node);
 node getNeighborU(node);
 node getNeighborD(node);
 
-char *getBoardHash(node);
+//getBoardHash(int[BOARDSIZE][BOARDSIZE]);
+
 
 int DFS(node, int);
 void idaStar(node);
 
-int getManhattanScore(node aNode);
+int getManhattanScore(int[BOARDSIZE][BOARDSIZE]);
 
 board *aBoard;
 successboard *successState;
@@ -52,39 +55,49 @@ successboard *successState;
 int successMapI[BOARDSIZE*BOARDSIZE];
 int successMapK[BOARDSIZE*BOARDSIZE];
 
-hashset_t set;
+unordered_set <uint64_t> visitedNodes;
 
+bool isBoardSolved(int[BOARDSIZE][BOARDSIZE]);
+
+uint64_t getBoardHash(int[BOARDSIZE][BOARDSIZE], int);
+
+int findKValue(int[BOARDSIZE][BOARDSIZE], int);
+int findIValue(int[BOARDSIZE][BOARDSIZE], int);
+
+//int getBoardHash(int listOfNums[3]);
+
+int countNodes =0;
 
 int main() {
 
-    set = hashset_create();
-
-    if (set == NULL) {
-        fprintf(stderr, "failed to create hashset instance\n");
-        abort();
-    }
 
    board aBoard;
    successState = (successboard*) malloc(sizeof(successboard));
 
-    int boardSize = 3;
+    string boardStr = "13.2.10.3.1.12.8.4.5.0.9.6.15.14.11.7";
+    int thisBoard[] = {13,2,10,3,1,12,8,4,5,0,9,6,15,14,11,7};
+    int thisBoard2[] = {1,10,15,4,13,6,3,8,2,9,12,7,14,5,0,11};
+    int successBoard[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0};
+
     int count =0;
     for(int i=0;i<BOARDSIZE;i++){
         for(int k = 0;k<BOARDSIZE;k++){
-            aBoard.board[i][k] = count;
-            successMapI[count] = i;
-            successMapK[count] = k;
+            //aBoard.board[i][k] = count;
+            aBoard.board[i][k] = thisBoard2[count];
+            successMapI[successBoard[count]] = i;
+            successMapK[successBoard[count]] = k;
             count = count+1;
         }
     }
-    
 
-    //printBoard(aBoard.board);
+
 
     node *startNode = (node*) malloc(sizeof(node));
     startNode->currentBoard = aBoard;
-    startNode->currentBoard.emptyI = 0;
-    startNode->currentBoard.emptyK = 0;
+    cout << findIValue(startNode->currentBoard.board, 0);
+    cout << findKValue(startNode->currentBoard.board, 0);
+    startNode->currentBoard.emptyI = findIValue(startNode->currentBoard.board, 0);
+    startNode->currentBoard.emptyK = findKValue(startNode->currentBoard.board, 0);
     startNode->pathCost = 0;
 
     node rNeighbor = getNeighborR(*startNode);
@@ -96,11 +109,17 @@ int main() {
 
     node dNeighbor = getNeighborD(*startNode);
 
+
+
     //printf("manhattan score: %d\n", getManhattanScore(rNeighbor));
+    printBoard(rNeighbor.currentBoard.board);
 
-    printf(getBoardHash(dNeighbor));
+    //string hashValue = getBoardHash(rNeighbor.currentBoard.board)
 
-    //idaStar(rNeighbor);
+    rNeighbor.previousMove = 'N';
+    idaStar(rNeighbor);
+
+    //getBoardHash(rNeighbor);
 
 
     return 0;
@@ -111,8 +130,31 @@ int main() {
 void idaStar(node tempNode){
 
     int depth=0;
+    visitedNodes.clear();
 
-    int result = DFS(tempNode, 40);
+    int result = 100;
+    //cout << visitedNodes.find(getBoardHash(theNode));
+    while(depth < 50 && result > 0){
+        result = DFS(tempNode, depth);
+        depth = depth+1;
+
+        visitedNodes.clear();
+
+        cout << "Searched depth: ";
+        cout << depth;
+    }
+
+    if(result < 0){
+        cout << "FOUND RESULT in steps: \n";
+        cout << result*-1;
+        cout << "\n";
+        cout << "DEPTH IS:";
+        cout << depth;
+    }
+    
+    cout << "\n";
+    cout << "Count of Nodes searched:\n";
+    cout << countNodes;
 
     // while(depth < 60){
     //     int result = DFS(tempNode, depth);
@@ -126,31 +168,58 @@ int DFS(node theNode, int limit){
     //printf("Path cost: %d\n", theNode.pathCost);
     //printf("manhattan cost: %d\n", getManhattanScore(theNode));
 
-    //hashset_add()
-    if(theNode.pathCost+getManhattanScore(theNode) > limit){
+    //cout << getManhattanScore(theNode.currentBoard.board);
+
+    if(theNode.pathCost+getManhattanScore(theNode.currentBoard.board) > limit){
         return theNode.pathCost;
+    }
+    countNodes = countNodes+1;
+    uint64_t value = getBoardHash(theNode.currentBoard.board, theNode.pathCost);
+    if(visitedNodes.find(value) == visitedNodes.end()){
+        visitedNodes.insert(value);
+        countNodes = countNodes+1;
+    }
+    else{
+        return 1;
+    }
+
+    if(isBoardSolved(theNode.currentBoard.board)){
+        cout << "SOLVED!";
+        cout << "\n";
+        printBoard(theNode.currentBoard.board);
+        return -theNode.pathCost;
     }
 
     if(theNode.previousMove != 'R' && theNode.currentBoard.emptyK > 0){
         node lNode = getNeighborL(theNode);
         int answer = DFS(lNode, limit);
+        if(answer < 0){
+            return answer;
+        }
 
     }
     if(theNode.previousMove != 'L' && theNode.currentBoard.emptyK < (BOARDSIZE-1)){
         node rNode = getNeighborR(theNode);
-        if(rNode.pathCost > 0){
-            int answer = DFS(rNode, limit);
+        int answer = DFS(rNode, limit);
+        if(answer < 0){
+            return answer;
         }
+        
     }
     if(theNode.previousMove != 'D' && theNode.currentBoard.emptyI > 0){
         node uNode = getNeighborU(theNode);
         int answer = DFS(uNode, limit);
+        if(answer < 0){
+            return answer;
+        }
 
-        
     }
     if(theNode.previousMove != 'U' && theNode.currentBoard.emptyI < (BOARDSIZE-1)){
         //node dNode = getNeighborD(theNode);
         int answer = DFS(getNeighborD(theNode), limit);
+        if(answer < 0){
+            return answer;
+        }
     }
 
     return limit;
@@ -233,16 +302,13 @@ node getNeighborD(node aNode){
     
 }
 
-int getManhattanScore(node aNode){
+int getManhattanScore(int aboard[BOARDSIZE][BOARDSIZE]){
     int manhattanSum = 0;
 
     for(int i =0;i<BOARDSIZE;i++){
         for(int k=0;k<BOARDSIZE;k++){
-            int currentValue = aNode.currentBoard.board[i][k];
+            int currentValue = aboard[i][k];
             if(currentValue != 0){
-                //printf("Value were looking at: %d\n", currentValue);
-                //printf("Value score: %d\n", abs(successMapI[currentValue]-i) +abs(successMapK[currentValue] -k));
-
                 manhattanSum = manhattanSum+ abs(successMapI[currentValue]-i) +abs(successMapK[currentValue] -k);
             }
         }
@@ -262,19 +328,61 @@ void printBoard(int aboard[BOARDSIZE][BOARDSIZE]){
     }
 }
 
-char *getBoardHash(node aNode){
 
-    char theString[17];
-    int strCount = 0
-    for(int i=0;i<BOARDSIZE;i++){
-        for(int k=0;k<BOARDSIZE;k++){
-            char stringValue[1];
-            itoa(aNode.currentBoard.board[i][k], stringValue, 10);
-            theString[strCount] = stringValue;
+uint64_t getBoardHash(int aboard[BOARDSIZE][BOARDSIZE], int pathCost){
+    
+    uint64_t totalNum = 0;
 
+    for (int i=0; i<BOARDSIZE;i++){
+        for (int j=0;j<BOARDSIZE;j++){
+            totalNum = totalNum << 4;
+            totalNum = totalNum+aboard[i][j];
         }
     }
 
-    return *theString;
+    totalNum = totalNum << 4;
+    totalNum = totalNum+pathCost;
 
+    return totalNum;
+}
+
+
+bool isBoardSolved(int aboard[BOARDSIZE][BOARDSIZE]){
+
+    for (int i=0; i<BOARDSIZE;i++){
+        for (int k=0;k<BOARDSIZE;k++){
+            if(i != successMapI[aboard[i][k]] || k != successMapK[aboard[i][k]]){
+                return false;
+            }
+        }
+    }
+
+    return true;
+
+}
+
+int findIValue(int aboard[BOARDSIZE][BOARDSIZE], int theValue){
+
+    for (int i=0; i<BOARDSIZE;i++){
+        for (int k=0;k<BOARDSIZE;k++){
+            if(aboard[i][k] == theValue){
+                return i;
+            }
+        }
+    }
+
+    return -1;
+}
+
+int findKValue(int aboard[BOARDSIZE][BOARDSIZE], int theValue){
+
+    for (int i=0; i<BOARDSIZE;i++){
+        for (int k=0;k<BOARDSIZE;k++){
+            if(aboard[i][k] == theValue){
+                return k;
+            }
+        }
+    }
+
+    return -1;
 }
