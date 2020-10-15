@@ -5,11 +5,13 @@
 #include<iostream> 
 #include <sstream>  // for string streams 
 #include <string>
-
-
-#define BOARDSIZE 4
+#include <stack>
+#include <iterator>
+#include <algorithm>
 
 using namespace std;
+
+#define BOARDSIZE 3
 
 typedef struct Board {
     int board[BOARDSIZE][BOARDSIZE];
@@ -64,12 +66,17 @@ uint64_t getBoardHash(int[BOARDSIZE][BOARDSIZE], int);
 int findKValue(int[BOARDSIZE][BOARDSIZE], int);
 int findIValue(int[BOARDSIZE][BOARDSIZE], int);
 
-//int getBoardHash(int listOfNums[3]);
+int getInversionNum(int[BOARDSIZE][BOARDSIZE]);
+bool isSolvable(int[BOARDSIZE][BOARDSIZE]);
 
-int countNodes =0;
+board createRandomBoard(int[BOARDSIZE*BOARDSIZE]);
+
+int getNumMisplacedTiles(int[BOARDSIZE][BOARDSIZE]);
+
+uint64_t countNodes =0;
 
 int main() {
-
+    srand(time(NULL));
 
    board aBoard;
    successState = (successboard*) malloc(sizeof(successboard));
@@ -78,29 +85,58 @@ int main() {
     int thisBoard[] = {13,2,10,3,1,12,8,4,5,0,9,6,15,14,11,7};
     int thisBoard2[] = {1,10,15,4,13,6,3,8,2,9,12,7,14,5,0,11};
     int successBoard[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0};
+    int successBoard3[] = {1,2,3,4,5,6,7,8,0};
+    int hardBoard[] = {15,14,8,12,10,11,9,13,2,6,5,1,3,7,4, 0};
 
+    int possibleValues[(BOARDSIZE*BOARDSIZE)];
     int count =0;
     for(int i=0;i<BOARDSIZE;i++){
         for(int k = 0;k<BOARDSIZE;k++){
             //aBoard.board[i][k] = count;
-            aBoard.board[i][k] = thisBoard2[count];
-            successMapI[successBoard[count]] = i;
-            successMapK[successBoard[count]] = k;
+            aBoard.board[i][k] = thisBoard[count];
+            successMapI[successBoard3[count]] = i;
+            successMapK[successBoard3[count]] = k;
+            possibleValues[count] = count;
             count = count+1;
+
         }
     }
 
+    int solvedCount = 0;
+    int unsolvedCount = 0;
+    while(solvedCount < 10 && unsolvedCount < 10){
+
+        board newBoard = createRandomBoard(possibleValues);
+
+        node startNode;
+        startNode.currentBoard= newBoard;
+        startNode.currentBoard.emptyI = findIValue(startNode.currentBoard.board, 0);
+        startNode.currentBoard.emptyK = findKValue(startNode.currentBoard.board, 0);
+        startNode.pathCost = 0;
+        startNode.previousMove='N';
+
+        if( isSolvable(newBoard.board) == true){
+            //cout << "SOLVABLE:\n";
+
+            printBoard(newBoard.board);
+            
+            fflush(stdout);
+            idaStar(startNode);
+            solvedCount = solvedCount+1;
+            cout << "\n";
+        }
+        else{
+            unsolvedCount = unsolvedCount+1;
+        }
+
+        fflush(stdout);
+        
 
 
-    node startNode;
-    startNode.currentBoard= aBoard;
-    startNode.currentBoard.emptyI = findIValue(startNode.currentBoard.board, 0);
-    startNode.currentBoard.emptyK = findKValue(startNode.currentBoard.board, 0);
-    startNode.pathCost = 0;
-    startNode.previousMove='N';
+    }
 
     //string hashValue = getBoardHash(rNeighbor.currentBoard.board)
-    idaStar(startNode);
+    //idaStar(startNode);
 
     //getBoardHash(rNeighbor);
 
@@ -115,49 +151,61 @@ void idaStar(node tempNode){
     int depth=0;
     visitedNodes.clear();
 
+
     int result = 100;
-    while(depth < 50 && result >= 0){
-        result = DFS(tempNode, depth);
+
+    fflush(stdout);
+    while(result >= 0){
         depth = depth+1;
+        result = DFS(tempNode, depth);
+
+        // if(depth%5 == 0 && depth> 30){
+        //     cout << "Searched depth: ";
+        //     cout << depth; 
+        //     cout << "\n";
+        //     fflush(stdout);
+        // }
 
         visitedNodes.clear();
-
-        cout << "Searched depth: ";
-        cout << depth;
     }
 
     if(result < 0){
-        cout << "FOUND RESULT in steps: \n";
+        cout << "FOUND RESULT in steps: ";
         cout << result*-1;
         cout << "\n";
-        cout << "DEPTH IS:";
-        cout << depth;
     }
     
-    cout << "\n";
-    cout << "Count of Nodes searched:\n";
+    cout << "Count of Nodes searched:";
     cout << countNodes;
-
+    cout << "\n";
 }
 
-int DFS(node theNode, int limit){
-    if(theNode.pathCost+getManhattanScore(theNode.currentBoard.board) > limit){
+int DFS(node theNode, int limit, int hVal){
+    if(hVal == 1){
+        int totalCost = theNode.pathCost+getNumMisplacedTiles(theNode.currentBoard.board);
+    }
+    else if (hVal == 2)
+    {
+        int totalCost = theNode.pathCost+getNumMisplacedTiles(theNode.currentBoard.board);
+    }
+    
+    if(totalCost > limit){
         return theNode.pathCost;
     }
     countNodes = countNodes+1;
-    uint64_t value = getBoardHash(theNode.currentBoard.board, theNode.pathCost);
-    if(visitedNodes.find(value) == visitedNodes.end()){
-        visitedNodes.insert(value);
-        countNodes = countNodes+1;
-    }
-    else{
-        return 1;
-    }
+    // uint64_t value = getBoardHash(theNode.currentBoard.board, theNode.pathCost);
+    // if(visitedNodes.find(value) == visitedNodes.end()){
+    //     visitedNodes.insert(value);
+    //     countNodes = countNodes+1;
+    // }
+    // else{
+    //     return 1;
+    // }
 
     if(isBoardSolved(theNode.currentBoard.board)){
-        cout << "SOLVED!";
-        cout << "\n";
-        printBoard(theNode.currentBoard.board);
+        //cout << "SOLVED!";
+        //cout << "\n";
+        //printBoard(theNode.currentBoard.board);
         return -theNode.pathCost;
     }
 
@@ -288,6 +336,24 @@ int getManhattanScore(int aboard[BOARDSIZE][BOARDSIZE]){
     return manhattanSum;
 }
 
+int getNumMisplacedTiles(int aboard[BOARDSIZE][BOARDSIZE]){
+    int numMisplaced = 0;
+
+    for(int i =0;i<BOARDSIZE;i++){
+        for(int k=0;k<BOARDSIZE;k++){
+            int currentValue = aboard[i][k];
+            if(currentValue != 0){
+                if(i != successMapI[currentValue] || k != successMapK[currentValue]){
+                    numMisplaced = numMisplaced+1;
+                }
+            }
+        }
+    }
+
+    return numMisplaced;
+
+}
+
 
 void printBoard(int aboard[BOARDSIZE][BOARDSIZE]){
     printf("\n");
@@ -357,3 +423,88 @@ int findKValue(int aboard[BOARDSIZE][BOARDSIZE], int theValue){
 
     return -1;
 }
+
+bool isSolvable(int aboard[BOARDSIZE][BOARDSIZE]){
+    if(BOARDSIZE%2 == 0){
+        int iVal = findIValue(aboard, 0);
+        int kVal = findKValue(aboard, 0);
+        int rowFromBottom = BOARDSIZE-iVal;
+        //cout << "Row from bottom: ";
+        //cout << rowFromBottom;
+        //cout << "\n";
+        if(rowFromBottom%2 == 0){
+            return getInversionNum(aboard)%2==1;
+        }
+        else{
+            return getInversionNum(aboard)%2==0;
+        }
+    }
+    else{
+        return getInversionNum(aboard)%2==0;
+    }
+}
+
+int getInversionNum(int aboard[BOARDSIZE][BOARDSIZE]){
+
+    int linearList[(BOARDSIZE*BOARDSIZE)-1];
+    int count = 0 ;
+    for (int i=0; i<BOARDSIZE;i++){
+        for (int k=0;k<BOARDSIZE;k++){
+            if(aboard[i][k] != 0){
+                linearList[count] = aboard[i][k];
+                count = count+1;
+            }
+        }
+    }
+
+    int numInversions = 0;
+
+    for(int i=0;i<((BOARDSIZE*BOARDSIZE)-2);i++){
+        //cout << linearList[i];
+        //cout << " ";
+        for(int j=i+1;j<((BOARDSIZE*BOARDSIZE)-1);j++){
+            if(linearList[j] < linearList[i]){
+                numInversions = numInversions+1;
+            }
+        }
+    }
+    //cout << "\n Number of inversions: ";
+    //cout << numInversions;
+    //cout << "\n";
+
+    return numInversions;
+}
+
+
+board createRandomBoard(int possibleValues[BOARDSIZE*BOARDSIZE]){
+
+    int maxVal = BOARDSIZE*BOARDSIZE;
+
+    vector<int> theList;
+
+    for(int i=0;i<(BOARDSIZE*BOARDSIZE);i++){
+        theList.push_back(possibleValues[i]);
+    }
+
+    board newboard;
+
+    std::random_shuffle ( theList.begin(), theList.end() );
+
+    int count = 0;
+    for(int i=0;i<BOARDSIZE;i++){
+        for(int k=0;k<BOARDSIZE;k++){
+
+
+            //cout << theList[count];
+            //cout << "\n";
+            newboard.board[i][k] = theList[count];
+
+            count = count+1;
+        }
+    }
+
+    newboard.emptyI = findIValue(newboard.board, 0);
+    newboard.emptyK = findKValue(newboard.board, 0);
+
+    return newboard;
+}   
