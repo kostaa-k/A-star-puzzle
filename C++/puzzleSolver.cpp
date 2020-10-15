@@ -92,32 +92,15 @@ int main() {
 
 
 
-    node *startNode = (node*) malloc(sizeof(node));
-    startNode->currentBoard = aBoard;
-    cout << findIValue(startNode->currentBoard.board, 0);
-    cout << findKValue(startNode->currentBoard.board, 0);
-    startNode->currentBoard.emptyI = findIValue(startNode->currentBoard.board, 0);
-    startNode->currentBoard.emptyK = findKValue(startNode->currentBoard.board, 0);
-    startNode->pathCost = 0;
-
-    node rNeighbor = getNeighborR(*startNode);
-
-
-    node lNeighbor = getNeighborL(*startNode);
-
-    node uNeighbor = getNeighborU(*startNode);
-
-    node dNeighbor = getNeighborD(*startNode);
-
-
-
-    //printf("manhattan score: %d\n", getManhattanScore(rNeighbor));
-    printBoard(rNeighbor.currentBoard.board);
+    node startNode;
+    startNode.currentBoard= aBoard;
+    startNode.currentBoard.emptyI = findIValue(startNode.currentBoard.board, 0);
+    startNode.currentBoard.emptyK = findKValue(startNode.currentBoard.board, 0);
+    startNode.pathCost = 0;
+    startNode.previousMove='N';
 
     //string hashValue = getBoardHash(rNeighbor.currentBoard.board)
-
-    rNeighbor.previousMove = 'N';
-    idaStar(rNeighbor);
+    idaStar(startNode);
 
     //getBoardHash(rNeighbor);
 
@@ -133,8 +116,7 @@ void idaStar(node tempNode){
     visitedNodes.clear();
 
     int result = 100;
-    //cout << visitedNodes.find(getBoardHash(theNode));
-    while(depth < 50 && result > 0){
+    while(depth < 50 && result >= 0){
         result = DFS(tempNode, depth);
         depth = depth+1;
 
@@ -156,20 +138,9 @@ void idaStar(node tempNode){
     cout << "Count of Nodes searched:\n";
     cout << countNodes;
 
-    // while(depth < 60){
-    //     int result = DFS(tempNode, depth);
-    //     depth = depth+1;
-    //     printf("Depth: %d\n", depth);
-    // }
 }
 
 int DFS(node theNode, int limit){
-    //printBoard(theNode.currentBoard.board);
-    //printf("Path cost: %d\n", theNode.pathCost);
-    //printf("manhattan cost: %d\n", getManhattanScore(theNode));
-
-    //cout << getManhattanScore(theNode.currentBoard.board);
-
     if(theNode.pathCost+getManhattanScore(theNode.currentBoard.board) > limit){
         return theNode.pathCost;
     }
