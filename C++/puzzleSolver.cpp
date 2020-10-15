@@ -38,40 +38,37 @@ typedef struct SuccessBoard {
 
 void printBoard(int aboard[BOARDSIZE][BOARDSIZE]);
 
+board *aBoard;
+successboard *successState;
+
+//Success Map definitions
+int successMapI[BOARDSIZE*BOARDSIZE];
+int successMapK[BOARDSIZE*BOARDSIZE];
+
+//Visited Nodes definition
+unordered_set <uint64_t> visitedNodes;
+
+//A* Algorithm Definitions
+int DFS(node, int, int);
+void idaStar(node, int);
+
+//Heuristic Defintions
+int getNumMisplacedTiles(int[BOARDSIZE][BOARDSIZE]);
+int getManhattanScore(int[BOARDSIZE][BOARDSIZE]);
+
+//GamePlay Functions
 node getNeighborR(node);
 node getNeighborL(node);
 node getNeighborU(node);
 node getNeighborD(node);
 
-//getBoardHash(int[BOARDSIZE][BOARDSIZE]);
-
-
-int DFS(node, int);
-void idaStar(node);
-
-int getManhattanScore(int[BOARDSIZE][BOARDSIZE]);
-
-board *aBoard;
-successboard *successState;
-
-int successMapI[BOARDSIZE*BOARDSIZE];
-int successMapK[BOARDSIZE*BOARDSIZE];
-
-unordered_set <uint64_t> visitedNodes;
-
 bool isBoardSolved(int[BOARDSIZE][BOARDSIZE]);
-
 uint64_t getBoardHash(int[BOARDSIZE][BOARDSIZE], int);
-
 int findKValue(int[BOARDSIZE][BOARDSIZE], int);
 int findIValue(int[BOARDSIZE][BOARDSIZE], int);
-
 int getInversionNum(int[BOARDSIZE][BOARDSIZE]);
 bool isSolvable(int[BOARDSIZE][BOARDSIZE]);
-
 board createRandomBoard(int[BOARDSIZE*BOARDSIZE]);
-
-int getNumMisplacedTiles(int[BOARDSIZE][BOARDSIZE]);
 
 uint64_t countNodes =0;
 
@@ -81,7 +78,6 @@ int main() {
    board aBoard;
    successState = (successboard*) malloc(sizeof(successboard));
 
-    string boardStr = "13.2.10.3.1.12.8.4.5.0.9.6.15.14.11.7";
     int thisBoard[] = {13,2,10,3,1,12,8,4,5,0,9,6,15,14,11,7};
     int thisBoard2[] = {1,10,15,4,13,6,3,8,2,9,12,7,14,5,0,11};
     int successBoard[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0};
@@ -121,7 +117,7 @@ int main() {
             printBoard(newBoard.board);
             
             fflush(stdout);
-            idaStar(startNode);
+            idaStar(startNode, 1);
             solvedCount = solvedCount+1;
             cout << "\n";
         }
@@ -146,7 +142,7 @@ int main() {
 
 
 
-void idaStar(node tempNode){
+void idaStar(node tempNode, int hVal){
 
     int depth=0;
     visitedNodes.clear();
@@ -157,7 +153,7 @@ void idaStar(node tempNode){
     fflush(stdout);
     while(result >= 0){
         depth = depth+1;
-        result = DFS(tempNode, depth);
+        result = DFS(tempNode, depth, hVal);
 
         // if(depth%5 == 0 && depth> 30){
         //     cout << "Searched depth: ";
@@ -181,12 +177,16 @@ void idaStar(node tempNode){
 }
 
 int DFS(node theNode, int limit, int hVal){
+    int totalCost = 100;
     if(hVal == 1){
-        int totalCost = theNode.pathCost+getNumMisplacedTiles(theNode.currentBoard.board);
+        totalCost = theNode.pathCost+getNumMisplacedTiles(theNode.currentBoard.board);
     }
     else if (hVal == 2)
     {
-        int totalCost = theNode.pathCost+getNumMisplacedTiles(theNode.currentBoard.board);
+        totalCost = theNode.pathCost+getManhattanScore(theNode.currentBoard.board);
+    }
+    else{
+        return theNode.pathCost;
     }
     
     if(totalCost > limit){
@@ -211,7 +211,7 @@ int DFS(node theNode, int limit, int hVal){
 
     if(theNode.previousMove != 'R' && theNode.currentBoard.emptyK > 0){
         node lNode = getNeighborL(theNode);
-        int answer = DFS(lNode, limit);
+        int answer = DFS(lNode, limit, hVal);
         if(answer < 0){
             return answer;
         }
@@ -219,7 +219,7 @@ int DFS(node theNode, int limit, int hVal){
     }
     if(theNode.previousMove != 'L' && theNode.currentBoard.emptyK < (BOARDSIZE-1)){
         node rNode = getNeighborR(theNode);
-        int answer = DFS(rNode, limit);
+        int answer = DFS(rNode, limit, hVal);
         if(answer < 0){
             return answer;
         }
@@ -227,7 +227,7 @@ int DFS(node theNode, int limit, int hVal){
     }
     if(theNode.previousMove != 'D' && theNode.currentBoard.emptyI > 0){
         node uNode = getNeighborU(theNode);
-        int answer = DFS(uNode, limit);
+        int answer = DFS(uNode, limit, hVal);
         if(answer < 0){
             return answer;
         }
@@ -235,7 +235,7 @@ int DFS(node theNode, int limit, int hVal){
     }
     if(theNode.previousMove != 'U' && theNode.currentBoard.emptyI < (BOARDSIZE-1)){
         //node dNode = getNeighborD(theNode);
-        int answer = DFS(getNeighborD(theNode), limit);
+        int answer = DFS(getNeighborD(theNode), limit, hVal);
         if(answer < 0){
             return answer;
         }
