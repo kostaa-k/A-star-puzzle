@@ -11,7 +11,7 @@
 
 using namespace std;
 
-#define BOARDSIZE 3
+#define BOARDSIZE 4
 
 typedef struct Board {
     int board[BOARDSIZE][BOARDSIZE];
@@ -49,8 +49,8 @@ int successMapK[BOARDSIZE*BOARDSIZE];
 unordered_set <uint64_t> visitedNodes;
 
 //A* Algorithm Definitions
-int DFS(node, int, int);
-void idaStar(node, int);
+int DFS(node, int);
+void idaStar(node);
 
 //Heuristic Defintions
 int getNumMisplacedTiles(int[BOARDSIZE][BOARDSIZE]);
@@ -80,6 +80,8 @@ int main() {
 
     int thisBoard[] = {13,2,10,3,1,12,8,4,5,0,9,6,15,14,11,7};
     int thisBoard2[] = {1,10,15,4,13,6,3,8,2,9,12,7,14,5,0,11};
+    int thisBoard3[] = {15,3, 8, 2, 14, 9, 13, 11, 0, 5, 6, 12, 4, 10, 1, 7};
+    int thisBoard4[] = {3, 0, 11, 5, 15, 14, 6, 13, 8, 2, 9, 10, 7, 1, 4, 12};
     int successBoard[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0};
     int successBoard3[] = {1,2,3,4,5,6,7,8,0};
     int hardBoard[] = {15,14,8,12,10,11,9,13,2,6,5,1,3,7,4, 0};
@@ -89,9 +91,9 @@ int main() {
     for(int i=0;i<BOARDSIZE;i++){
         for(int k = 0;k<BOARDSIZE;k++){
             //aBoard.board[i][k] = count;
-            aBoard.board[i][k] = thisBoard[count];
-            successMapI[successBoard3[count]] = i;
-            successMapK[successBoard3[count]] = k;
+            aBoard.board[i][k] = thisBoard3[count];
+            successMapI[successBoard[count]] = i;
+            successMapK[successBoard[count]] = k;
             possibleValues[count] = count;
             count = count+1;
 
@@ -100,24 +102,24 @@ int main() {
 
     int solvedCount = 0;
     int unsolvedCount = 0;
-    while(solvedCount < 10 && unsolvedCount < 10){
+    while(solvedCount < 1){
 
-        board newBoard = createRandomBoard(possibleValues);
+        //board newBoard = createRandomBoard(possibleValues);
 
         node startNode;
-        startNode.currentBoard= newBoard;
+        startNode.currentBoard= aBoard;
         startNode.currentBoard.emptyI = findIValue(startNode.currentBoard.board, 0);
         startNode.currentBoard.emptyK = findKValue(startNode.currentBoard.board, 0);
         startNode.pathCost = 0;
         startNode.previousMove='N';
 
-        if( isSolvable(newBoard.board) == true){
+        if( isSolvable(startNode.currentBoard.board) == true){
             //cout << "SOLVABLE:\n";
 
-            printBoard(newBoard.board);
+            printBoard(startNode.currentBoard.board);
             
             fflush(stdout);
-            idaStar(startNode, 1);
+            idaStar(startNode);
             solvedCount = solvedCount+1;
             cout << "\n";
         }
@@ -142,27 +144,30 @@ int main() {
 
 
 
-void idaStar(node tempNode, int hVal){
+void idaStar(node tempNode){
 
     int depth=0;
     visitedNodes.clear();
 
+    
 
     int result = 100;
 
     fflush(stdout);
-    while(result >= 0){
+    while(result >= 0 && depth < 70){
         depth = depth+1;
-        result = DFS(tempNode, depth, hVal);
+        result = DFS(tempNode, depth);
 
-        // if(depth%5 == 0 && depth> 30){
-        //     cout << "Searched depth: ";
-        //     cout << depth; 
-        //     cout << "\n";
-        //     fflush(stdout);
-        // }
+        if(depth%5 == 0 && depth> 30){
+            cout << "Searched depth: ";
+            cout << depth; 
+            cout << "\n";
+            fflush(stdout);
+        }
 
         visitedNodes.clear();
+
+        
     }
 
     if(result < 0){
@@ -174,25 +179,14 @@ void idaStar(node tempNode, int hVal){
     cout << "Count of Nodes searched:";
     cout << countNodes;
     cout << "\n";
+
+    countNodes = 0;
 }
 
-int DFS(node theNode, int limit, int hVal){
-    int totalCost = 100;
-    if(hVal == 1){
-        totalCost = theNode.pathCost+getNumMisplacedTiles(theNode.currentBoard.board);
-    }
-    else if (hVal == 2)
-    {
-        totalCost = theNode.pathCost+getManhattanScore(theNode.currentBoard.board);
-    }
-    else{
-        return theNode.pathCost;
-    }
-    
-    if(totalCost > limit){
-        return theNode.pathCost;
-    }
+int DFS(node theNode, int limit){
+
     countNodes = countNodes+1;
+    
     // uint64_t value = getBoardHash(theNode.currentBoard.board, theNode.pathCost);
     // if(visitedNodes.find(value) == visitedNodes.end()){
     //     visitedNodes.insert(value);
@@ -202,32 +196,30 @@ int DFS(node theNode, int limit, int hVal){
     //     return 1;
     // }
 
+
+    if(theNode.pathCost+getManhattanScore(theNode.currentBoard.board) > limit){
+        return theNode.pathCost;
+    }
     if(isBoardSolved(theNode.currentBoard.board)){
-        //cout << "SOLVED!";
-        //cout << "\n";
-        //printBoard(theNode.currentBoard.board);
         return -theNode.pathCost;
     }
 
     if(theNode.previousMove != 'R' && theNode.currentBoard.emptyK > 0){
-        node lNode = getNeighborL(theNode);
-        int answer = DFS(lNode, limit, hVal);
+        int answer = DFS(getNeighborL(theNode), limit);
         if(answer < 0){
             return answer;
         }
 
     }
     if(theNode.previousMove != 'L' && theNode.currentBoard.emptyK < (BOARDSIZE-1)){
-        node rNode = getNeighborR(theNode);
-        int answer = DFS(rNode, limit, hVal);
+        int answer = DFS(getNeighborR(theNode), limit);
         if(answer < 0){
             return answer;
         }
         
     }
     if(theNode.previousMove != 'D' && theNode.currentBoard.emptyI > 0){
-        node uNode = getNeighborU(theNode);
-        int answer = DFS(uNode, limit, hVal);
+        int answer = DFS(getNeighborU(theNode), limit);
         if(answer < 0){
             return answer;
         }
@@ -235,7 +227,7 @@ int DFS(node theNode, int limit, int hVal){
     }
     if(theNode.previousMove != 'U' && theNode.currentBoard.emptyI < (BOARDSIZE-1)){
         //node dNode = getNeighborD(theNode);
-        int answer = DFS(getNeighborD(theNode), limit, hVal);
+        int answer = DFS(getNeighborD(theNode), limit);
         if(answer < 0){
             return answer;
         }
@@ -246,21 +238,26 @@ int DFS(node theNode, int limit, int hVal){
 
 
 node getNeighborR(node aNode){
-    int toSwitch = aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK+1];
-    int oldEmptyI =  aNode.currentBoard.emptyI;
-    int oldEmptyK = aNode.currentBoard.emptyK;
+    aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK] = aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK+1];
+    aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK+1] = 0;
+    //int toSwitch = aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK+1];
+    //int oldEmptyI =  aNode.currentBoard.emptyI;
+    //int oldEmptyK = aNode.currentBoard.emptyK;
+    aNode.currentBoard.emptyK++;
+    aNode.pathCost++;
+    aNode.previousMove = 'R';
 
-    node returnNode;
-    returnNode.currentBoard = aNode.currentBoard;
+    // node returnNode;
+    // returnNode.currentBoard = aNode.currentBoard;
 
-    returnNode.currentBoard.emptyI = oldEmptyI;
-    returnNode.currentBoard.emptyK = oldEmptyK+1;
-    returnNode.currentBoard.board[oldEmptyI][oldEmptyK] = toSwitch;
-    returnNode.currentBoard.board[oldEmptyI][oldEmptyK+1] = 0;
-    returnNode.pathCost = aNode.pathCost+1;
-    returnNode.previousMove = 'R';
+    // returnNode.currentBoard.emptyI = aNode.currentBoard.emptyI;
+    // returnNode.currentBoard.emptyK = oldEmptyK+1;
+    // returnNode.currentBoard.board[oldEmptyI][oldEmptyK] = aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK+1];
+    // returnNode.currentBoard.board[oldEmptyI][oldEmptyK+1] = 0;
+    // returnNode.pathCost = aNode.pathCost+1;
+    // returnNode.previousMove = 'R';
 
-    return returnNode;
+    return aNode;
 }
 
 
