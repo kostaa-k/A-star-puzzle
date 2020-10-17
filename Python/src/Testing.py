@@ -34,7 +34,7 @@ def main():
         if(aNode.isSolvable()):
             for key in vals:
                 nodesExpanded = 0
-                finishedNode, nodesExpanded = DriverFunctions.IDA(aNode, successState,successDict, hVal=key)
+                finishedNode, nodesExpanded = DriverFunctions.solvePuzzle(aNode, successState, successDict, hVal=key)
                 pathCost_df.at[key, "PathCost"+(str)(count)] = finishedNode.pathCost
                 nodesExpanded_df.at[key, "NodesExpanded"+str(count)] = nodesExpanded
                 print(key, " FINISHED WITH PATH COST: ", finishedNode.pathCost, "NODES EXPANDED: ", nodesExpanded)

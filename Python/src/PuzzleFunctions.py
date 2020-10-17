@@ -167,12 +167,14 @@ def isBoardSolvable(board):
 def createSuccessState(boardSize):
     theBoard = createEmptyBoard(boardSize=boardSize)
 
-    count = 0
+    count = 1
 
     for i in range(0, boardSize):
         for k in range(0, boardSize):
             theBoard[i][k] = count
             count = count+1
+
+    theBoard[boardSize-1][boardSize-1] = 0
 
     return theBoard
 

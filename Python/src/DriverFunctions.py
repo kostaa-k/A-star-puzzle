@@ -8,7 +8,7 @@ import time
 from copy import deepcopy
 
 
-def solvePuzzle(aNode, successState, hVal, heuristicDictionary=None):
+def solvePuzzle(aNode, successState, successDict, hVal, heuristicDictionary=None):
     if(heuristicDictionary== None):
         heuristicDictionary = PuzzleHeuristics.getHeuristicsDictionary()
 
@@ -22,10 +22,10 @@ def solvePuzzle(aNode, successState, hVal, heuristicDictionary=None):
     count = 0
     while(isSolved == False):
         nodesExpanded = nodesExpanded+1
-        aNode.getConnectedNodes()
+        
 
-        for tempNode in aNode.connectedNodes:
-            tempNode.heuristic = heuristicDictionary[hVal](tempNode.board, successState)
+        for tempNode in aNode.getConnectedNodes():
+            tempNode.heuristic = heuristicDictionary[hVal](tempNode.board, successDict)
 
             if(tempNode.toHash() not in statesReached):
                 bisect.insort(frontierNodes, tempNode)

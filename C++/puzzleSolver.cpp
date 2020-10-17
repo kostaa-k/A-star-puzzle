@@ -13,37 +13,24 @@ using namespace std;
 
 #define BOARDSIZE 4
 
-typedef struct Board {
-    int board[BOARDSIZE][BOARDSIZE];
-    int emptyI;
-    int emptyK;
-} board;
-
-
 typedef struct Node {
     int pathCost;
-    board currentBoard;
     char previousMove;
-} node;
-
-
-typedef struct SuccessBoard {
     int board[BOARDSIZE][BOARDSIZE];
     int emptyI;
     int emptyK;
-    int iMap[BOARDSIZE*BOARDSIZE];
-    int kMap[BOARDSIZE*BOARDSIZE];
-} successboard;
+    int countMisplaced;
+} node;
 
 
 void printBoard(int aboard[BOARDSIZE][BOARDSIZE]);
 
-board *aBoard;
-successboard *successState;
 
 //Success Map definitions
 int successMapI[BOARDSIZE*BOARDSIZE];
 int successMapK[BOARDSIZE*BOARDSIZE];
+int aSuccessMapI[BOARDSIZE*BOARDSIZE];
+int aSuccessMapK[BOARDSIZE*BOARDSIZE];
 
 //Visited Nodes definition
 unordered_set <uint64_t> visitedNodes;
@@ -52,9 +39,15 @@ unordered_set <uint64_t> visitedNodes;
 int DFS(node, int);
 void idaStar(node);
 
+int search(node, int);
+list<node> getNeighbors(node);
+
+
 //Heuristic Defintions
 int getNumMisplacedTiles(int[BOARDSIZE][BOARDSIZE]);
 int getManhattanScore(int[BOARDSIZE][BOARDSIZE]);
+
+int getManhattanScoreAdditive(int[BOARDSIZE][BOARDSIZE]);
 
 //GamePlay Functions
 node getNeighborR(node);
@@ -68,34 +61,50 @@ int findKValue(int[BOARDSIZE][BOARDSIZE], int);
 int findIValue(int[BOARDSIZE][BOARDSIZE], int);
 int getInversionNum(int[BOARDSIZE][BOARDSIZE]);
 bool isSolvable(int[BOARDSIZE][BOARDSIZE]);
-board createRandomBoard(int[BOARDSIZE*BOARDSIZE]);
+node createRandomBoard(int[BOARDSIZE*BOARDSIZE]);
 
 uint64_t countNodes =0;
 
 int main() {
     srand(time(NULL));
 
-   board aBoard;
-   successState = (successboard*) malloc(sizeof(successboard));
 
     int thisBoard[] = {13,2,10,3,1,12,8,4,5,0,9,6,15,14,11,7};
     int thisBoard2[] = {1,10,15,4,13,6,3,8,2,9,12,7,14,5,0,11};
+
+    //FOR TESTING:
     int thisBoard3[] = {15,3, 8, 2, 14, 9, 13, 11, 0, 5, 6, 12, 4, 10, 1, 7};
+
     int thisBoard4[] = {3, 0, 11, 5, 15, 14, 6, 13, 8, 2, 9, 10, 7, 1, 4, 12};
     int successBoard[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0};
     int successBoard3[] = {1,2,3,4,5,6,7,8,0};
     int hardBoard[] = {15,14,8,12,10,11,9,13,2,6,5,1,3,7,4, 0};
+    int hardBoard2[] = {0,12,8,4,15,11,7,3,14,10,6,2,13,9,5,1};
+
+    //int additiveSuccessBoard[] = {1,2,3,4,-1,-1, -1, -1, 5}
+    int additiveSuccessBoard[] = {1,2,3,4,-1,-1,-1,-1,9,-1,-1,-1,13,-1,-1,-1};
 
     int possibleValues[(BOARDSIZE*BOARDSIZE)];
     int count =0;
+
+    node startNode2;
     for(int i=0;i<BOARDSIZE;i++){
         for(int k = 0;k<BOARDSIZE;k++){
             //aBoard.board[i][k] = count;
-            aBoard.board[i][k] = thisBoard3[count];
+            startNode2.board[i][k] = thisBoard3[count];
             successMapI[successBoard[count]] = i;
             successMapK[successBoard[count]] = k;
             possibleValues[count] = count;
             count = count+1;
+
+            if(k == 0 || i == 0){
+                aSuccessMapI[successBoard[count]] = i;
+                aSuccessMapK[successBoard[count]] = k;
+            }
+            else{
+                aSuccessMapI[successBoard[count]] = -1;
+                aSuccessMapK[successBoard[count]] = -1;
+            }
 
         }
     }
@@ -104,22 +113,24 @@ int main() {
     int unsolvedCount = 0;
     while(solvedCount < 1){
 
-        //board newBoard = createRandomBoard(possibleValues);
+        //node randomNode = createRandomBoard(possibleValues);
 
-        node startNode;
-        startNode.currentBoard= aBoard;
-        startNode.currentBoard.emptyI = findIValue(startNode.currentBoard.board, 0);
-        startNode.currentBoard.emptyK = findKValue(startNode.currentBoard.board, 0);
+        //node startNode = createRandomBoard(possibleValues);
+        node startNode = startNode2;
+        startNode.emptyI = findIValue(startNode.board, 0);
+        startNode.emptyK = findKValue(startNode.board, 0);
         startNode.pathCost = 0;
         startNode.previousMove='N';
+        startNode.countMisplaced = getNumMisplacedTiles(startNode.board);
 
-        if( isSolvable(startNode.currentBoard.board) == true){
+        if( isSolvable(startNode.board) == true){
             //cout << "SOLVABLE:\n";
 
-            printBoard(startNode.currentBoard.board);
+            printBoard(startNode.board);
             
             fflush(stdout);
             idaStar(startNode);
+            cout << getManhattanScoreAdditive(startNode.board);
             solvedCount = solvedCount+1;
             cout << "\n";
         }
@@ -156,7 +167,14 @@ void idaStar(node tempNode){
     fflush(stdout);
     while(result >= 0 && depth < 70){
         depth = depth+1;
-        result = DFS(tempNode, depth);
+        //unordered_set <uint64_t> visitedStates;
+        //visitedStates.insert(getBoardHash(tempNode.board, tempNode.pathCost));
+        result = search(tempNode, depth);
+
+        // cout << "Searched depth: ";
+        // cout << depth; 
+        // cout << "\n";
+        // fflush(stdout);
 
         if(depth%5 == 0 && depth> 30){
             cout << "Searched depth: ";
@@ -185,47 +203,38 @@ void idaStar(node tempNode){
 
 int DFS(node theNode, int limit){
 
-    countNodes = countNodes+1;
-    
-    // uint64_t value = getBoardHash(theNode.currentBoard.board, theNode.pathCost);
-    // if(visitedNodes.find(value) == visitedNodes.end()){
-    //     visitedNodes.insert(value);
-    //     countNodes = countNodes+1;
-    // }
-    // else{
-    //     return 1;
-    // }
+    countNodes++;
 
-
-    if(theNode.pathCost+getManhattanScore(theNode.currentBoard.board) > limit){
+    if(theNode.pathCost+getManhattanScore(theNode.board)> limit){
         return theNode.pathCost;
     }
-    if(isBoardSolved(theNode.currentBoard.board)){
+    if(isBoardSolved(theNode.board)){
         return -theNode.pathCost;
     }
 
-    if(theNode.previousMove != 'R' && theNode.currentBoard.emptyK > 0){
+    if(theNode.previousMove != 'R' && theNode.emptyK > 0){
+        //node neighbor = getNeighborL(theNode);
         int answer = DFS(getNeighborL(theNode), limit);
         if(answer < 0){
             return answer;
         }
 
     }
-    if(theNode.previousMove != 'L' && theNode.currentBoard.emptyK < (BOARDSIZE-1)){
+    if(theNode.previousMove != 'L' && theNode.emptyK < (BOARDSIZE-1)){
         int answer = DFS(getNeighborR(theNode), limit);
         if(answer < 0){
             return answer;
         }
         
     }
-    if(theNode.previousMove != 'D' && theNode.currentBoard.emptyI > 0){
+    if(theNode.previousMove != 'D' && theNode.emptyI > 0){
         int answer = DFS(getNeighborU(theNode), limit);
         if(answer < 0){
             return answer;
         }
 
     }
-    if(theNode.previousMove != 'U' && theNode.currentBoard.emptyI < (BOARDSIZE-1)){
+    if(theNode.previousMove != 'U' && theNode.emptyI < (BOARDSIZE-1)){
         //node dNode = getNeighborD(theNode);
         int answer = DFS(getNeighborD(theNode), limit);
         if(answer < 0){
@@ -236,14 +245,80 @@ int DFS(node theNode, int limit){
     return limit;
 }
 
+int search(node theNode, int limit){
+
+
+
+    if(theNode.pathCost+getManhattanScore(theNode.board) > limit){
+        return theNode.pathCost;
+    }
+
+    countNodes++;
+
+    if (getManhattanScoreAdditive(theNode.board) == 0){
+        return -theNode.pathCost;
+    }
+
+
+    if(isBoardSolved(theNode.board)){
+        return -theNode.pathCost;
+    }
+
+    list<node> neighbors = getNeighbors(theNode);
+
+    for (std::list<node>::iterator currentNeighbor = neighbors.begin(); currentNeighbor != neighbors.end(); ++currentNeighbor){
+        
+        node theNeighbor = *currentNeighbor;
+
+        int answer = search(theNeighbor, limit);
+        if(answer < 0){
+            return answer;
+        }
+
+    }
+
+    return limit;
+
+}
+
+
+list<node> getNeighbors(node theNode){
+
+    list<node> returnNodes;
+    if(theNode.previousMove != 'R' && theNode.emptyK > 0){
+        returnNodes.push_back(getNeighborL(theNode));
+    }
+    if(theNode.previousMove != 'L' && theNode.emptyK < (BOARDSIZE-1)){
+        returnNodes.push_back(getNeighborR(theNode));
+    }
+    if(theNode.previousMove != 'D' && theNode.emptyI > 0){
+        returnNodes.push_back(getNeighborU(theNode));
+
+    }
+    if(theNode.previousMove != 'U' && theNode.emptyI < (BOARDSIZE-1)){
+        returnNodes.push_back(getNeighborD(theNode));
+    }
+
+    return returnNodes;
+}
+
 
 node getNeighborR(node aNode){
-    aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK] = aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK+1];
-    aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK+1] = 0;
+    int toSwitch = aNode.board[aNode.emptyI][aNode.emptyK+1];
+    aNode.board[aNode.emptyI][aNode.emptyK] = toSwitch;
+    aNode.board[aNode.emptyI][aNode.emptyK+1] = 0;
+    if(aNode.emptyI == successMapI[toSwitch]){
+        if(aNode.emptyK == successMapK[toSwitch]){
+            aNode.countMisplaced--;
+        }
+        else if(aNode.emptyK+1 == successMapK[toSwitch]){
+            aNode.countMisplaced++;
+        }
+    }
     //int toSwitch = aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK+1];
     //int oldEmptyI =  aNode.currentBoard.emptyI;
     //int oldEmptyK = aNode.currentBoard.emptyK;
-    aNode.currentBoard.emptyK++;
+    aNode.emptyK++;
     aNode.pathCost++;
     aNode.previousMove = 'R';
 
@@ -262,61 +337,98 @@ node getNeighborR(node aNode){
 
 
 node getNeighborL(node aNode){
-    int toSwitch = aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK-1];
-    int oldEmptyI =  aNode.currentBoard.emptyI;
-    int oldEmptyK = aNode.currentBoard.emptyK;
+    int toSwitch = aNode.board[aNode.emptyI][aNode.emptyK-1];
 
-    node returnNode;
-    returnNode.currentBoard = aNode.currentBoard;
+    aNode.board[aNode.emptyI][aNode.emptyK] = toSwitch;
+    aNode.board[aNode.emptyI][aNode.emptyK-1] = 0;
 
-    returnNode.currentBoard.emptyI = oldEmptyI;
-    returnNode.currentBoard.emptyK = oldEmptyK-1;
-    returnNode.currentBoard.board[oldEmptyI][oldEmptyK] = toSwitch;
-    returnNode.currentBoard.board[oldEmptyI][oldEmptyK-1] = 0;
-    returnNode.pathCost = aNode.pathCost+1;
-    returnNode.previousMove = 'L';
+    if(aNode.emptyI == successMapI[toSwitch]){
+        if(aNode.emptyK == successMapK[toSwitch]){
+            aNode.countMisplaced--;
+        }
+        else if(aNode.emptyK-1 == successMapK[toSwitch]){
+            aNode.countMisplaced++;
+        }
+    }
+    //int toSwitch = aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK+1];
+    //int oldEmptyI =  aNode.currentBoard.emptyI;
+    //int oldEmptyK = aNode.currentBoard.emptyK;
+    aNode.emptyK--;
+    aNode.pathCost++;
+    aNode.previousMove = 'L';
 
-    return returnNode;
+    return aNode;
 }
 
 node getNeighborU(node aNode){
-    int toSwitch = aNode.currentBoard.board[aNode.currentBoard.emptyI-1][aNode.currentBoard.emptyK];
-    int oldEmptyI =  aNode.currentBoard.emptyI;
-    int oldEmptyK = aNode.currentBoard.emptyK;
 
-    node returnNode;
-    returnNode.currentBoard = aNode.currentBoard;
+    int toSwitch = aNode.board[aNode.emptyI-1][aNode.emptyK];
+    aNode.board[aNode.emptyI][aNode.emptyK] = toSwitch;
+    aNode.board[aNode.emptyI-1][aNode.emptyK] = 0;
 
-    returnNode.currentBoard.emptyI = oldEmptyI-1;
-    returnNode.currentBoard.emptyK = oldEmptyK;
-    returnNode.currentBoard.board[oldEmptyI][oldEmptyK] = toSwitch;
-    returnNode.currentBoard.board[oldEmptyI-1][oldEmptyK] = 0;
-    returnNode.pathCost = aNode.pathCost+1;
-    returnNode.previousMove = 'U';
+    if(aNode.emptyK == successMapK[toSwitch]){
+        if(aNode.emptyI == successMapI[toSwitch]){
+            aNode.countMisplaced--;
+        }
+        else if(aNode.emptyI-1 == successMapI[toSwitch]){
+            aNode.countMisplaced++;
+        }
+    }
+    
+    //int toSwitch = aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK+1];
+    //int oldEmptyI =  aNode.currentBoard.emptyI;
+    //int oldEmptyK = aNode.currentBoard.emptyK;
+    aNode.emptyI--;
+    aNode.pathCost++;
+    aNode.previousMove = 'U';
 
-    return returnNode;
+    return aNode;
 
 }
 
 
 node getNeighborD(node aNode){
-    int toSwitch = aNode.currentBoard.board[aNode.currentBoard.emptyI+1][aNode.currentBoard.emptyK];
-    int oldEmptyI =  aNode.currentBoard.emptyI;
-    int oldEmptyK = aNode.currentBoard.emptyK;
+    int toSwitch = aNode.board[aNode.emptyI+1][aNode.emptyK];
+    aNode.board[aNode.emptyI][aNode.emptyK] = toSwitch;
+    aNode.board[aNode.emptyI+1][aNode.emptyK] = 0;
 
-    node returnNode;
-    returnNode.currentBoard = aNode.currentBoard;
+    if(aNode.emptyK == successMapK[toSwitch]){
+        if(aNode.emptyI == successMapI[toSwitch]){
+            aNode.countMisplaced--;
+        }
+        else if(aNode.emptyI+1 == successMapI[toSwitch]){
+            aNode.countMisplaced++;
+        }
+    }
 
-    returnNode.currentBoard.emptyI = oldEmptyI+1;
-    returnNode.currentBoard.emptyK = oldEmptyK;
-    returnNode.currentBoard.board[oldEmptyI][oldEmptyK] = toSwitch;
-    returnNode.currentBoard.board[oldEmptyI+1][oldEmptyK] = 0;
-    returnNode.pathCost = aNode.pathCost+1;
-    returnNode.previousMove = 'D';
+    //int toSwitch = aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK+1];
+    //int oldEmptyI =  aNode.currentBoard.emptyI;
+    //int oldEmptyK = aNode.currentBoard.emptyK;
+    aNode.emptyI++;
+    aNode.pathCost++;
+    aNode.previousMove = 'D';
 
-    return returnNode;
+    return aNode;
     
 }
+
+
+int getManhattanScoreAdditive(int aboard[BOARDSIZE][BOARDSIZE]){
+    int manhattanSum = 0;
+
+    for(int i =0;i<BOARDSIZE;i++){
+        for(int k=0;k<BOARDSIZE;k++){
+            int currentValue = aboard[i][k];
+            if(currentValue != 0 and aSuccessMapI[currentValue] != -1){
+                manhattanSum+= abs(successMapI[currentValue]-i) +abs(successMapK[currentValue] -k);
+            }
+        }
+    }
+
+    return manhattanSum;
+}
+
+
 
 int getManhattanScore(int aboard[BOARDSIZE][BOARDSIZE]){
     int manhattanSum = 0;
@@ -325,7 +437,7 @@ int getManhattanScore(int aboard[BOARDSIZE][BOARDSIZE]){
         for(int k=0;k<BOARDSIZE;k++){
             int currentValue = aboard[i][k];
             if(currentValue != 0){
-                manhattanSum = manhattanSum+ abs(successMapI[currentValue]-i) +abs(successMapK[currentValue] -k);
+                manhattanSum+= abs(successMapI[currentValue]-i) +abs(successMapK[currentValue] -k);
             }
         }
     }
@@ -341,7 +453,7 @@ int getNumMisplacedTiles(int aboard[BOARDSIZE][BOARDSIZE]){
             int currentValue = aboard[i][k];
             if(currentValue != 0){
                 if(i != successMapI[currentValue] || k != successMapK[currentValue]){
-                    numMisplaced = numMisplaced+1;
+                    numMisplaced++;
                 }
             }
         }
@@ -374,8 +486,8 @@ uint64_t getBoardHash(int aboard[BOARDSIZE][BOARDSIZE], int pathCost){
         }
     }
 
-    totalNum = totalNum << 4;
-    totalNum = totalNum+pathCost;
+    //totalNum = totalNum << 4;
+    //totalNum = totalNum+pathCost;
 
     return totalNum;
 }
@@ -473,7 +585,7 @@ int getInversionNum(int aboard[BOARDSIZE][BOARDSIZE]){
 }
 
 
-board createRandomBoard(int possibleValues[BOARDSIZE*BOARDSIZE]){
+node createRandomBoard(int possibleValues[BOARDSIZE*BOARDSIZE]){
 
     int maxVal = BOARDSIZE*BOARDSIZE;
 
@@ -483,7 +595,7 @@ board createRandomBoard(int possibleValues[BOARDSIZE*BOARDSIZE]){
         theList.push_back(possibleValues[i]);
     }
 
-    board newboard;
+    node newboard;
 
     std::random_shuffle ( theList.begin(), theList.end() );
 
@@ -504,4 +616,5 @@ board createRandomBoard(int possibleValues[BOARDSIZE*BOARDSIZE]){
     newboard.emptyK = findKValue(newboard.board, 0);
 
     return newboard;
-}   
+}
+

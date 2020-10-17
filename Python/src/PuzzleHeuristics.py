@@ -5,7 +5,7 @@ def getHeuristicsDictionary():
     heuristicDictionary = {}
     heuristicDictionary["h1"] = getNumMispacedTiles
     heuristicDictionary["h2"] = getBoardManhattanScore
-    heuristicDictionary["h3"] = maxIDMD
+    heuristicDictionary["h3"] = getLinearConflicts
     heuristicDictionary["h4"] = getNumberOfIncompleteRowsAndCols
     heuristicDictionary["h5"] = getNumIncorrectRelatives
     heuristicDictionary["h6"] = getNumIncorrectRelatives_add_max_false
@@ -43,6 +43,43 @@ def getBoardManhattanScore(board, successDictionary):
                 manhattanSum = manhattanSum+manhattanDiff
 
     return manhattanSum
+
+
+def getLinearConflicts(board, successDictionary):
+    correctColumns = []
+
+    correctRows = []
+
+    for i in range(0, len(board)):
+        tempRows = []
+        tempCols = []
+        for k in range(0, len(board[i])):
+            if(board[i][k] != 0):
+                zeroTileList = successDictionary[board[i][k]]
+                otherTileI = zeroTileList[0]
+                otherTileK = zeroTileList[1]
+                if(otherTileI == i):
+                    tempRows.append(board[i][k])
+
+            if(board[k][i] != 0):
+                zeroTileList = successDictionary[board[k][i]]
+                otherTileI = zeroTileList[0]
+                otherTileK = zeroTileList[1]
+                if(otherTileK == i):
+                    tempCols.append(board[k][i])
+
+        correctColumns.append(tempCols)
+        correctRows.append(tempRows)
+    
+    conflicts = 0
+
+    for x in correctColumns:
+        conflicts = conflicts+ getInversionsInList(x)
+        
+    for x in correctRows:
+        conflicts = conflicts+getInversionsInList(x)
+
+    return (2*conflicts)+getBoardManhattanScore(board, successDictionary)
 
 
 #THIS CAN BE OUR H3 -> from https://web.archive.org/web/20141224035932/http://juropollo.xe0.ru:80/stp_wd_translation_en.htm
