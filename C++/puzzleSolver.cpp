@@ -49,6 +49,10 @@ int getManhattanScore(int[BOARDSIZE][BOARDSIZE]);
 
 int getManhattanScoreAdditive(int[BOARDSIZE][BOARDSIZE]);
 
+int getInversionsInList(int [BOARDSIZE]);
+
+int getLinearConflicts(int[BOARDSIZE][BOARDSIZE]);
+
 //GamePlay Functions
 node getNeighborR(node);
 node getNeighborL(node);
@@ -130,7 +134,7 @@ int main() {
             
             fflush(stdout);
             idaStar(startNode);
-            cout << getManhattanScoreAdditive(startNode.board);
+            cout << getLinearConflicts(startNode.board);
             solvedCount = solvedCount+1;
             cout << "\n";
         }
@@ -169,7 +173,7 @@ void idaStar(node tempNode){
         depth = depth+1;
         //unordered_set <uint64_t> visitedStates;
         //visitedStates.insert(getBoardHash(tempNode.board, tempNode.pathCost));
-        result = search(tempNode, depth);
+        result = DFS(tempNode, depth);
 
         // cout << "Searched depth: ";
         // cout << depth; 
@@ -203,7 +207,6 @@ void idaStar(node tempNode){
 
 int DFS(node theNode, int limit){
 
-    countNodes++;
 
     if(theNode.pathCost+getManhattanScore(theNode.board)> limit){
         return theNode.pathCost;
@@ -211,6 +214,8 @@ int DFS(node theNode, int limit){
     if(isBoardSolved(theNode.board)){
         return -theNode.pathCost;
     }
+
+    countNodes++;
 
     if(theNode.previousMove != 'R' && theNode.emptyK > 0){
         //node neighbor = getNeighborL(theNode);
@@ -428,6 +433,62 @@ int getManhattanScoreAdditive(int aboard[BOARDSIZE][BOARDSIZE]){
     return manhattanSum;
 }
 
+int getLinearConflicts(int aboard[BOARDSIZE][BOARDSIZE]){
+
+    int inversionCount = 0;
+    int successCol[BOARDSIZE][BOARDSIZE];
+    int successRow[BOARDSIZE][BOARDSIZE];
+
+    for(int i =0;i<BOARDSIZE;i++){
+        for(int k=0;k<BOARDSIZE;k++){
+            int currentValueRow = aboard[i][k];
+            int currentValueCol = aboard[k][i];
+
+            successCol[i][k] = -1;
+            successRow[i][k] = -1;
+            
+            if(currentValueRow != 0){
+                if(i == successMapI[currentValueRow]){
+                    successRow[i][k] = currentValueRow;
+                }
+            }
+
+            if(currentValueCol != 0){
+                if(i == successMapK[currentValueCol]){
+                    successCol[i][k] = currentValueCol;
+                }
+            }
+        }
+    }
+
+    //printBoard(successCol);
+    //printBoard(successRow);
+
+    for(int i =0;i<BOARDSIZE;i++){
+        inversionCount = inversionCount+getInversionsInList(successCol[i])+getInversionsInList(successRow[i]);
+    }
+
+    return 2*inversionCount+getManhattanScore(aboard);
+}
+
+int getInversionsInList(int aList[BOARDSIZE]){
+    
+    int inversionCount = 0;
+
+    for(int i =0;i<BOARDSIZE;i++){
+        if(aList[i] > 0){
+            for(int j=i+1;j<BOARDSIZE;j++){
+                if(aList[j] < aList[i] && aList[j] > 0){
+                    inversionCount++;
+                }
+            }
+
+        }
+
+    }
+
+    return inversionCount;
+}
 
 
 int getManhattanScore(int aboard[BOARDSIZE][BOARDSIZE]){
