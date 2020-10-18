@@ -13,6 +13,11 @@ using namespace std;
 
 #define BOARDSIZE 4
 
+
+int heuristicVal = 3;
+
+int minValue;
+
 typedef struct Node {
     int pathCost;
     char previousMove;
@@ -21,6 +26,12 @@ typedef struct Node {
     int emptyK;
     int countMisplaced;
 } node;
+
+typedef struct resultStruct {
+    node startNode;
+    uint64_t nodesExpanded;
+    int pathCost;
+} resultstruct;
 
 
 void printBoard(int aboard[BOARDSIZE][BOARDSIZE]);
@@ -37,7 +48,7 @@ unordered_set <uint64_t> visitedNodes;
 
 //A* Algorithm Definitions
 int DFS(node, int);
-void idaStar(node);
+resultstruct idaStar(node);
 
 int search(node, int);
 list<node> getNeighbors(node);
@@ -67,6 +78,8 @@ int getInversionNum(int[BOARDSIZE][BOARDSIZE]);
 bool isSolvable(int[BOARDSIZE][BOARDSIZE]);
 node createRandomBoard(int[BOARDSIZE*BOARDSIZE]);
 
+node randomBoardWithinMoves(node, int);
+
 uint64_t countNodes =0;
 
 int main() {
@@ -92,6 +105,7 @@ int main() {
     int count =0;
 
     node startNode2;
+    node successNode;
     for(int i=0;i<BOARDSIZE;i++){
         for(int k = 0;k<BOARDSIZE;k++){
             //aBoard.board[i][k] = count;
@@ -99,6 +113,9 @@ int main() {
             successMapI[successBoard[count]] = i;
             successMapK[successBoard[count]] = k;
             possibleValues[count] = count;
+
+            successNode.board[i][k] = successBoard[count];
+
             count = count+1;
 
             if(k == 0 || i == 0){
@@ -113,14 +130,27 @@ int main() {
         }
     }
 
+
+
+    successNode.pathCost = 0;
+    successNode.emptyI = successMapI[0];
+    successNode.emptyK = successMapK[0];
+    successNode.previousMove = 'N';
+
     int solvedCount = 0;
     int unsolvedCount = 0;
-    while(solvedCount < 1){
+
+    resultstruct resultsH1[100];
+    resultstruct resultsH2[100];
+    resultstruct resultsH3[100];
+
+    while(solvedCount < 100){
 
         //node randomNode = createRandomBoard(possibleValues);
 
         //node startNode = createRandomBoard(possibleValues);
-        node startNode = startNode2;
+        //node startNode = startNode2;
+        node startNode = randomBoardWithinMoves(successNode, 40);
         startNode.emptyI = findIValue(startNode.board, 0);
         startNode.emptyK = findKValue(startNode.board, 0);
         startNode.pathCost = 0;
@@ -128,15 +158,25 @@ int main() {
         startNode.countMisplaced = getNumMisplacedTiles(startNode.board);
 
         if( isSolvable(startNode.board) == true){
-            //cout << "SOLVABLE:\n";
+            for (int i=1;i<4;i++){
+                heuristicVal = i;
+                printBoard(startNode.board);
+                fflush(stdout);
+                resultstruct resultStats = idaStar(startNode);
+                if(i == 1){
+                    resultsH1[solvedCount] = resultStats;
+                }
+                else if (i == 2){
+                    resultsH2[solvedCount] = resultStats;
+                }
+                else if (i == 3){
+                    resultsH3[solvedCount] = resultStats;
+                }
+                solvedCount = solvedCount+1;
+                cout << "\n";
 
-            printBoard(startNode.board);
+            }
             
-            fflush(stdout);
-            idaStar(startNode);
-            cout << getLinearConflicts(startNode.board);
-            solvedCount = solvedCount+1;
-            cout << "\n";
         }
         else{
             unsolvedCount = unsolvedCount+1;
@@ -159,10 +199,12 @@ int main() {
 
 
 
-void idaStar(node tempNode){
+resultstruct idaStar(node tempNode){
 
     int depth=0;
-    visitedNodes.clear();
+
+    resultstruct resultObject;
+    resultObject.startNode = tempNode;
 
     
 
@@ -170,22 +212,12 @@ void idaStar(node tempNode){
 
     fflush(stdout);
     while(result >= 0 && depth < 70){
-        depth = depth+1;
+        minValue = 10000;
         //unordered_set <uint64_t> visitedStates;
         //visitedStates.insert(getBoardHash(tempNode.board, tempNode.pathCost));
         result = DFS(tempNode, depth);
 
-        // cout << "Searched depth: ";
-        // cout << depth; 
-        // cout << "\n";
-        // fflush(stdout);
-
-        if(depth%5 == 0 && depth> 30){
-            cout << "Searched depth: ";
-            cout << depth; 
-            cout << "\n";
-            fflush(stdout);
-        }
+        depth = minValue;
 
         visitedNodes.clear();
 
@@ -203,12 +235,32 @@ void idaStar(node tempNode){
     cout << "\n";
 
     countNodes = 0;
+
+    resultObject.nodesExpanded = countNodes;
+    resultObject.pathCost = result*-1;
+
+    return resultObject;
 }
 
 int DFS(node theNode, int limit){
 
+    int totalCost;
 
-    if(theNode.pathCost+getManhattanScore(theNode.board)> limit){
+    switch(heuristicVal){
+        case 1:
+            totalCost = theNode.pathCost+theNode.countMisplaced;
+            break;
+        case 2:
+            totalCost = theNode.pathCost+getManhattanScore(theNode.board);
+            break;
+        case 3:
+            totalCost = theNode.pathCost+getLinearConflicts(theNode.board);
+            break;
+    }
+    if(totalCost > limit){
+        if (totalCost < minValue){
+            minValue = totalCost;
+        }
         return theNode.pathCost;
     }
     if(isBoardSolved(theNode.board)){
@@ -664,9 +716,6 @@ node createRandomBoard(int possibleValues[BOARDSIZE*BOARDSIZE]){
     for(int i=0;i<BOARDSIZE;i++){
         for(int k=0;k<BOARDSIZE;k++){
 
-
-            //cout << theList[count];
-            //cout << "\n";
             newboard.board[i][k] = theList[count];
 
             count = count+1;
@@ -679,3 +728,37 @@ node createRandomBoard(int possibleValues[BOARDSIZE*BOARDSIZE]){
     return newboard;
 }
 
+node randomBoardWithinMoves(node successState, int moveThreshold){
+
+    unordered_set <uint64_t> visitedStates;
+
+    int maxVal = BOARDSIZE*BOARDSIZE;
+
+    int counter = 0;
+
+    int randomMove = -1;
+
+    while(counter < moveThreshold){
+
+        list<node> theNeighbors = getNeighbors(successState);
+
+        randomMove =  std::rand() % (theNeighbors.size());
+
+        bool foundMove = false;
+
+        while(foundMove == false){
+            auto l_front = theNeighbors.begin();
+            std::advance(l_front, randomMove);
+            node toLookFor = *l_front;
+            if(visitedStates.find(getBoardHash(toLookFor.board, 0)) == visitedStates.end()){
+                foundMove = true;
+                successState = toLookFor;
+            }
+            randomMove =  std::rand() % (theNeighbors.size());
+        }
+
+        counter++;
+    }
+
+    return successState;
+}
