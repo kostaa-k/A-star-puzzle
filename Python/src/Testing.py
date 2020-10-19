@@ -22,12 +22,14 @@ def main():
     pathCost_df = pd.DataFrame()
     nodesExpanded_df = pd.DataFrame()
 
+    results_df = pd.DataFrame()
+
     vals = ["h1", "h2", "h3"]
 
 
     successDict = PuzzleFunctions.getSuccessDictionary(successState)
     count = 0
-    while(count < 15):
+    while(count < 100):
         randomState = PuzzleFunctions.createRandomBoard(possibleVals)
         PuzzleFunctions.printBoardNicely(randomState)
         aNode = Node(randomState, None, 0)
@@ -35,6 +37,13 @@ def main():
             for key in vals:
                 nodesExpanded = 0
                 finishedNode, nodesExpanded = DriverFunctions.solvePuzzle(aNode, successState, successDict, hVal=key)
+                
+                #Put results to DF
+                results_df.at[count, "Puzzle #"] = count+1
+
+                results_df.at[count, key+" # of Steps"] = finishedNode.pathCost
+                results_df.at[count, key+" # of Nodes Expanded"] = nodesExpanded
+
                 pathCost_df.at[key, "PathCost"+(str)(count)] = finishedNode.pathCost
                 nodesExpanded_df.at[key, "NodesExpanded"+str(count)] = nodesExpanded
                 print(key, " FINISHED WITH PATH COST: ", finishedNode.pathCost, "NODES EXPANDED: ", nodesExpanded)
@@ -45,6 +54,8 @@ def main():
     print(pathCost_df)
 
     print(nodesExpanded_df)
+
+    results_df.to_csv("8-Puzzle-Results.csv", index=False)
 
 
 

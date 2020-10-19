@@ -51,7 +51,6 @@ unordered_set <uint64_t> visitedNodes;
 int DFS(node, int);
 resultstruct idaStar(node);
 
-int search(node, int);
 list<node> getNeighbors(node);
 
 
@@ -152,10 +151,7 @@ int main() {
 
     while(solvedCount < runToSolutions){
 
-        //node randomNode = createRandomBoard(possibleValues);
-
         //node startNode = createRandomBoard(possibleValues);
-        //node startNode = startNode2;
         node startNode = randomBoardWithinMoves(successNode, 38);
         startNode.emptyI = findIValue(startNode.board, 0);
         startNode.emptyK = findKValue(startNode.board, 0);
@@ -216,8 +212,6 @@ resultstruct idaStar(node tempNode){
     countNodes = 0;
     while(result >= 0 && depth < 70){
         minValue = 10000;
-        //unordered_set <uint64_t> visitedStates;
-        //visitedStates.insert(getBoardHash(tempNode.board, tempNode.pathCost));
         result = DFS(tempNode, depth);
 
         depth = minValue;
@@ -303,42 +297,6 @@ int DFS(node theNode, int limit){
     return limit;
 }
 
-int search(node theNode, int limit){
-
-
-
-    if(theNode.pathCost+getManhattanScore(theNode.board) > limit){
-        return theNode.pathCost;
-    }
-
-    countNodes++;
-
-    if (getManhattanScoreAdditive(theNode.board) == 0){
-        return -theNode.pathCost;
-    }
-
-
-    if(isBoardSolved(theNode.board)){
-        return -theNode.pathCost;
-    }
-
-    list<node> neighbors = getNeighbors(theNode);
-
-    for (std::list<node>::iterator currentNeighbor = neighbors.begin(); currentNeighbor != neighbors.end(); ++currentNeighbor){
-        
-        node theNeighbor = *currentNeighbor;
-
-        int answer = search(theNeighbor, limit);
-        if(answer < 0){
-            return answer;
-        }
-
-    }
-
-    return limit;
-
-}
-
 
 list<node> getNeighbors(node theNode){
 
@@ -373,22 +331,10 @@ node getNeighborR(node aNode){
             aNode.countMisplaced++;
         }
     }
-    //int toSwitch = aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK+1];
-    //int oldEmptyI =  aNode.currentBoard.emptyI;
-    //int oldEmptyK = aNode.currentBoard.emptyK;
     aNode.emptyK++;
     aNode.pathCost++;
     aNode.previousMove = 'R';
 
-    // node returnNode;
-    // returnNode.currentBoard = aNode.currentBoard;
-
-    // returnNode.currentBoard.emptyI = aNode.currentBoard.emptyI;
-    // returnNode.currentBoard.emptyK = oldEmptyK+1;
-    // returnNode.currentBoard.board[oldEmptyI][oldEmptyK] = aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK+1];
-    // returnNode.currentBoard.board[oldEmptyI][oldEmptyK+1] = 0;
-    // returnNode.pathCost = aNode.pathCost+1;
-    // returnNode.previousMove = 'R';
 
     return aNode;
 }
@@ -408,9 +354,6 @@ node getNeighborL(node aNode){
             aNode.countMisplaced++;
         }
     }
-    //int toSwitch = aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK+1];
-    //int oldEmptyI =  aNode.currentBoard.emptyI;
-    //int oldEmptyK = aNode.currentBoard.emptyK;
     aNode.emptyK--;
     aNode.pathCost++;
     aNode.previousMove = 'L';
@@ -433,9 +376,6 @@ node getNeighborU(node aNode){
         }
     }
     
-    //int toSwitch = aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK+1];
-    //int oldEmptyI =  aNode.currentBoard.emptyI;
-    //int oldEmptyK = aNode.currentBoard.emptyK;
     aNode.emptyI--;
     aNode.pathCost++;
     aNode.previousMove = 'U';
@@ -459,9 +399,6 @@ node getNeighborD(node aNode){
         }
     }
 
-    //int toSwitch = aNode.currentBoard.board[aNode.currentBoard.emptyI][aNode.currentBoard.emptyK+1];
-    //int oldEmptyI =  aNode.currentBoard.emptyI;
-    //int oldEmptyK = aNode.currentBoard.emptyK;
     aNode.emptyI++;
     aNode.pathCost++;
     aNode.previousMove = 'D';
