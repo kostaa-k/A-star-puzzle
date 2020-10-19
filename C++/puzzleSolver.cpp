@@ -2,12 +2,13 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <bits/stdc++.h> 
-#include<iostream> 
+#include <iostream> 
 #include <sstream>  // for string streams 
 #include <string>
 #include <stack>
 #include <iterator>
 #include <algorithm>
+#include <fstream>
 
 using namespace std;
 
@@ -80,7 +81,10 @@ node createRandomBoard(int[BOARDSIZE*BOARDSIZE]);
 
 node randomBoardWithinMoves(node, int);
 
-uint64_t countNodes =0;
+//Output Functions
+void writeResultsToCSV(string, resultstruct[100], resultstruct[100], resultstruct[100], int);
+
+uint64_t countNodes = 0;
 
 int main() {
     srand(time(NULL));
@@ -144,13 +148,15 @@ int main() {
     resultstruct resultsH2[100];
     resultstruct resultsH3[100];
 
-    while(solvedCount < 100){
+    int runToSolutions = 100;
+
+    while(solvedCount < runToSolutions){
 
         //node randomNode = createRandomBoard(possibleValues);
 
         //node startNode = createRandomBoard(possibleValues);
         //node startNode = startNode2;
-        node startNode = randomBoardWithinMoves(successNode, 40);
+        node startNode = randomBoardWithinMoves(successNode, 38);
         startNode.emptyI = findIValue(startNode.board, 0);
         startNode.emptyK = findKValue(startNode.board, 0);
         startNode.pathCost = 0;
@@ -172,11 +178,11 @@ int main() {
                 else if (i == 3){
                     resultsH3[solvedCount] = resultStats;
                 }
-                solvedCount = solvedCount+1;
+
                 cout << "\n";
 
             }
-            
+            solvedCount = solvedCount+1;
         }
         else{
             unsolvedCount = unsolvedCount+1;
@@ -185,13 +191,9 @@ int main() {
         fflush(stdout);
         
 
-
     }
 
-    //string hashValue = getBoardHash(rNeighbor.currentBoard.board)
-    //idaStar(startNode);
-
-    //getBoardHash(rNeighbor);
+    writeResultsToCSV("resultsLessThan40Moves.csv", resultsH1, resultsH2, resultsH3, runToSolutions);
 
 
     return 0;
@@ -211,6 +213,7 @@ resultstruct idaStar(node tempNode){
     int result = 100;
 
     fflush(stdout);
+    countNodes = 0;
     while(result >= 0 && depth < 70){
         minValue = 10000;
         //unordered_set <uint64_t> visitedStates;
@@ -233,8 +236,6 @@ resultstruct idaStar(node tempNode){
     cout << "Count of Nodes searched:";
     cout << countNodes;
     cout << "\n";
-
-    countNodes = 0;
 
     resultObject.nodesExpanded = countNodes;
     resultObject.pathCost = result*-1;
@@ -761,4 +762,49 @@ node randomBoardWithinMoves(node successState, int moveThreshold){
     }
 
     return successState;
+}
+
+
+void writeResultsToCSV(string fileName, resultstruct resultStats1[100], resultstruct resultStats2[100], resultstruct resultStats3[100], int numberOFRuns){
+
+    ofstream outputFile;
+    outputFile.open(fileName);
+
+    outputFile << "Puzzle #";
+
+    outputFile << ",h1 # of Steps";
+    outputFile << ",h1 # Nodes Expanded";
+
+    outputFile << ",h2 # of Steps";
+    outputFile << ",h2 # Nodes Expanded";
+
+    outputFile << ",h3 # of Steps";
+    outputFile << ",h3 # Nodes Expanded";
+
+    outputFile << "\n";
+
+    for(int i=0;i<numberOFRuns;i++){
+
+        outputFile << i+1;
+        //Print h1
+        if(resultStats1[i].pathCost != 0){
+            outputFile << ","+to_string(resultStats1[i].pathCost);
+            outputFile << ","+to_string(resultStats1[i].nodesExpanded);
+        }
+
+        //Print h2
+        if(resultStats2[i].pathCost != 0){
+            outputFile << ","+to_string(resultStats2[i].pathCost);
+            outputFile << ","+to_string(resultStats2[i].nodesExpanded);
+        }
+
+        //Print h3
+        if(resultStats3[i].pathCost != 0){
+            outputFile << ","+to_string(resultStats3[i].pathCost);
+            outputFile << ","+to_string(resultStats3[i].nodesExpanded);
+        }
+
+        outputFile << "\n";
+    }
+    outputFile.close();
 }
