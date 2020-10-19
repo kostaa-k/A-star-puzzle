@@ -12,6 +12,8 @@
 
 using namespace std;
 
+
+//CHANGE THIS VALUE BETWEEN 3 and 5 for different board configurations
 #define BOARDSIZE 4
 
 
@@ -96,8 +98,11 @@ int main() {
     int thisBoard3[] = {15,3, 8, 2, 14, 9, 13, 11, 0, 5, 6, 12, 4, 10, 1, 7};
 
     int thisBoard4[] = {3, 0, 11, 5, 15, 14, 6, 13, 8, 2, 9, 10, 7, 1, 4, 12};
-    int successBoard[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0};
+    int successBoard4[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0};
     int successBoard3[] = {1,2,3,4,5,6,7,8,0};
+
+    int successBoard5[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,0};
+
     int hardBoard[] = {15,14,8,12,10,11,9,13,2,6,5,1,3,7,4, 0};
     int hardBoard2[] = {0,12,8,4,15,11,7,3,14,10,6,2,13,9,5,1};
 
@@ -111,23 +116,61 @@ int main() {
     node successNode;
     for(int i=0;i<BOARDSIZE;i++){
         for(int k = 0;k<BOARDSIZE;k++){
-            //aBoard.board[i][k] = count;
-            startNode2.board[i][k] = thisBoard3[count];
-            successMapI[successBoard[count]] = i;
-            successMapK[successBoard[count]] = k;
-            possibleValues[count] = count;
 
-            successNode.board[i][k] = successBoard[count];
+            if(BOARDSIZE == 3){
+                successMapI[successBoard3[count]] = i;
+                successMapK[successBoard3[count]] = k;
+                possibleValues[count] = count;
 
-            count = count+1;
+                successNode.board[i][k] = successBoard3[count];
 
-            if(k == 0 || i == 0){
-                aSuccessMapI[successBoard[count]] = i;
-                aSuccessMapK[successBoard[count]] = k;
+                count = count+1;
+
+                if(k == 0 || i == 0){
+                    aSuccessMapI[successBoard3[count]] = i;
+                    aSuccessMapK[successBoard3[count]] = k;
+                }
+                else{
+                    aSuccessMapI[successBoard3[count]] = -1;
+                    aSuccessMapK[successBoard3[count]] = -1;
+                }
             }
-            else{
-                aSuccessMapI[successBoard[count]] = -1;
-                aSuccessMapK[successBoard[count]] = -1;
+            else if (BOARDSIZE == 4){
+                successMapI[successBoard4[count]] = i;
+                successMapK[successBoard4[count]] = k;
+                possibleValues[count] = count;
+
+                successNode.board[i][k] = successBoard4[count];
+
+                count = count+1;
+
+                if(k == 0 || i == 0){
+                    aSuccessMapI[successBoard4[count]] = i;
+                    aSuccessMapK[successBoard4[count]] = k;
+                }
+                else{
+                    aSuccessMapI[successBoard4[count]] = -1;
+                    aSuccessMapK[successBoard4[count]] = -1;
+                }
+            }
+            else if (BOARDSIZE == 5){
+                successMapI[successBoard5[count]] = i;
+                successMapK[successBoard5[count]] = k;
+                possibleValues[count] = count;
+
+                successNode.board[i][k] = successBoard5[count];
+
+                count = count+1;
+
+                if(k == 0 || i == 0){
+                    aSuccessMapI[successBoard5[count]] = i;
+                    aSuccessMapK[successBoard5[count]] = k;
+                }
+                else{
+                    aSuccessMapI[successBoard5[count]] = -1;
+                    aSuccessMapK[successBoard5[count]] = -1;
+                }
+
             }
 
         }
@@ -214,6 +257,8 @@ resultstruct idaStar(node tempNode){
         minValue = 10000;
         result = DFS(tempNode, depth);
 
+        cout << depth;
+        cout << "\n";
         depth = minValue;
 
         visitedNodes.clear();
